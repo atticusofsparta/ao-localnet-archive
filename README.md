@@ -59,20 +59,6 @@ npx ao-localnet stop          # tear down Docker containers (data is retained)
 1. Run `aos`:
     1. Run `./aos.sh`.
 
-## Additional Services
-
-> [!WARNING]
-> These are very old, experimental features that are not well supported.
-
-- ArDrive Web:
-  - Run `docker compose --profile ardrive up`.
-  - http://localhost:4001/
-  - _Not fully functional. See below for more details._
-- Turbo Upload Service (an Arweave uploader/bundlr):
-  - Run `docker compose --profile turbo up`.
-  - http://localhost:4005/
-  - _Not fully functional. See below for more details._
-
 ## Development Status of this Repo
 
 > [!WARNING]
@@ -99,25 +85,8 @@ npx ao-localnet stop          # tear down Docker containers (data is retained)
   - ✅ `mu`
   - ✅ `su`
 - ✅ Successfully launching `aos` processes on the `ao` localnet.
-- ⬜ Live reloading for `cu` and `mu` development.
-  - _A cool [feature](https://docs.docker.com/compose/compose-file/develop/) of Docker Compose._
 - ⬜ nginx reverse proxy, for hostname routing
   - Currently in testing. [This](https://hub.docker.com/r/nginxproxy/nginx-proxy) looks promising.
 - ⬜ DNS routing
   - ✅ Routing `*.ao-localnet.xyz` to `127.0.0.1` and `::1`
   - ℹ️ All containers should be reachable via `*.ao-localnet.xyz` domain names.
-- ⚠️ Fully functional ArDrive Web (web interface)
-  - ⏳ Known issues:
-    - ℹ️ Arweave gateway port [bug](https://github.com/ardriveapp/arweave-dart/issues/59):
-      - ✅ Fixed in [arweave-dart@v3.8.4](https://github.com/ardriveapp/arweave-dart/releases/tag/v3.8.4).
-      - 💻 Hacked together by `grep | sed` replacing the dependency in `ardrive-web@v2.37.2`
-      - 🙏 Hopefully fixed in the next version of [ArDrive Web](https://github.com/ardriveapp/ardrive-web).
-    - ⚠️ ArDrive Web is using so-called "sandboxed urls" where it contacts the gateway on a subdomain that is
-      the base32 encoded transaction id of the Arweave transaction.
-      - _This_ can _be resolved by adding `127.0.0.1 *.localhost` to your `/etc/hosts` file._
-      - _Probably will be fixed with DNS routing, see above._
-    - ⚠️ Cannot upload files due to missing Payment Service.
-      - _ArDrive Web doesn't respect its own configuration file setting: `"useTurboPayment": false`_
-      - _Probably because
-      [this class member](https://github.com/ardriveapp/ardrive-web/blob/v2.37.2/lib/turbo/services/payment_service.dart#L13)
-      is hard coded?_

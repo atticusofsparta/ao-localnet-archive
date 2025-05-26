@@ -18,7 +18,6 @@ This will generate one wallet for each of the entries in the following table:
 | aos-module-publisher | `aos-module-publisher-wallet.json` | Used by a seed script to upload the `aos` WASM module into Arlocal. |
 | bundler | `bundler.json` | Used by the `bundler` service to sign and pay for bundle transactions. |
 | scheduler-location-publisher | `scheduler-location-publisher-wallet.json` | Used by a seed script to make an Arweave transaction with the `Scheduler-Location` tag set to the `su` URL. |
-| turbo | `turbo-wallet.json` | Used by the `turbo` service to sign and pay for bundle transactions. |
 | user | `user-wallet.json` | Used by assorted seed scripts for seeding data into Arlocal. |
 
 ## Advanced Use Cases

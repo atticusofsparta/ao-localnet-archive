@@ -7,7 +7,6 @@ cd $(dirname $0)
 ./generateWallet.sh aos-module-publisher
 ./generateWallet.sh bundler
 ./generateWallet.sh scheduler-location-publisher
-./generateWallet.sh turbo
 ./generateWallet.sh user
 
 exit 0

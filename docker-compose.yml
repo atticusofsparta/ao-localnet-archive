@@ -5,10 +5,6 @@ configs:
     file: ./wallets/ao-wallet.json
   bundler-wallet:
     file: ./wallets/bundler-wallet.json
-  ardrive-web-app-config:
-    file: ./services/ardrive-web/app-config.json
-  turbo-wallet:
-    file: ./wallets/turbo-wallet.json
 
 volumes:
   su:
@@ -34,18 +30,6 @@ services:
       - 4000:80
     volumes:
       - ./services/arlocal/data:/app/db
-
-  ardrive-web:
-    profiles: ["ardrive"]
-    depends_on:
-      arlocal:
-        condition: service_healthy
-    build: ./services/ardrive-web
-    configs:
-      - source: ardrive-web-app-config
-        target: /usr/local/apache2/htdocs/assets/assets/config/dev.json
-    ports:
-      - 4001:80
 
   mu:
     build: ./services/mu
@@ -96,31 +80,6 @@ services:
     env_file: ./services/cu/.env
     ports:
       - 4004:80
-
-  turbo:
-    profiles: ["turbo"]
-    depends_on:
-      turbo-database:
-        condition: service_healthy
-    build: ./services/turbo
-    configs:
-      - source: turbo-wallet
-        target: /usr/src/turbo-wallet.json
-    env_file: ./services/turbo/.env
-    ports:
-      - 4005:80
-
-  turbo-database:
-    profiles: ["turbo"]
-    image: postgres
-    environment:
-      - POSTGRES_PASSWORD=postgres
-    healthcheck:
-      test: pg_isready -U postgres -d postgres || exit 1
-      start_period: 10s
-      start_interval: 1s
-    volumes:
-      - turbo:/var/lib/postgresql/data
 
   scar:
     depends_on:
