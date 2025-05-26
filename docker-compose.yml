@@ -19,7 +19,7 @@ services:
     build:
       context: ./services/arlocal
       args:
-        - REPO=https://github.com/MichaelBuhler/arlocal.git
+        - REPO=https://github.com/MarshalAO/arlocal.git
         - BRANCH=main
     command: [
       "--persist",      # save the database to disk
