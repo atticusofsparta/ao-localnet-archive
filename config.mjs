@@ -234,7 +234,10 @@ function objectToYaml(obj, indent = 0) {
     } else if (typeof value === 'object') {
       yaml += `${spaces}${key}:\n${objectToYaml(value, indent + 1)}`;
     } else {
-      yaml += `${spaces}${key}: ${value}\n`;
+      // Quote strings that need it (e.g., version numbers)
+      const needsQuotes = typeof value === 'string' && (key === 'version' || /^\d+\.\d+/.test(value));
+      const formattedValue = needsQuotes ? `"${value}"` : value;
+      yaml += `${spaces}${key}: ${formattedValue}\n`;
     }
   }
 
