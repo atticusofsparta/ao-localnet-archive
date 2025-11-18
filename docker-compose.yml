@@ -18,10 +18,11 @@ services:
         - REPO=https://github.com/MarshalAO/arlocal.git
         - BRANCH=main
     command: [
-      "--persist",      # save the database to disk
-      "--dbpath", "db", # in this folder
-      "80",             # listen on port 80
-    ]
+        "--persist", # save the database to disk
+        "--dbpath",
+        "db", # in this folder
+        "80", # listen on port 80
+      ]
     healthcheck:
       test: wget --spider http://localhost/info || exit 1
       start_period: 10s
@@ -41,6 +42,7 @@ services:
       - 4002:80
 
   su:
+    platform: linux/arm64 # Native Apple Silicon support
     depends_on:
       arlocal:
         condition: service_healthy
@@ -48,10 +50,24 @@ services:
         condition: service_healthy
     build:
       context: https://github.com/permaweb/ao.git#main:servers/su
+      dockerfile_inline: |
+        FROM rust:1.75.0 as builder
+        WORKDIR /usr/src/su
+        RUN apt-get update && apt-get install -y llvm-dev libclang-dev clang librocksdb-dev
+        COPY Cargo.toml Cargo.lock ./
+        COPY src ./src
+        COPY migrations ./migrations
+        RUN cargo build --release
+
+        FROM debian:bookworm-slim as runner
+        WORKDIR /app
+        RUN apt-get update && apt-get install -y ca-certificates libssl3 libpq5 librocksdb7.8 && rm -rf /var/lib/apt/lists/*
+        COPY --from=builder /usr/src/su/target/release/su /app/su
+        RUN chmod +x /app/su
     entrypoint:
       - "/app/su" # su executable binary
-      - "su"      # su mode (not router mode)
-      - "80"      # listen on port 80
+      - "su" # su mode (not router mode)
+      - "80" # listen on port 80
     configs:
       - source: ao-wallet
         target: /app/ao-wallet.json

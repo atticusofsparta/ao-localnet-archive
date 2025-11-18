@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "description": "AO Localnet Configuration - Custom Example",
+  "aos": {
+    "module": "https://get_ao.g8way.io"
+  },
+  "wallets": {
+    "directory": "./my-wallets",
+    "aoWallet": "./my-wallets/ao-wallet.json",
+    "bundlerWallet": "./my-wallets/bundler-wallet.json"
+  },
+  "data": {
+    "arlocal": "./data/arlocal",
+    "cu": "./data/cu",
+    "mu": "./data/mu",
+    "su": "./data/su",
+    "suDatabase": "su-database-volume",
+    "bundler": "./data/bundler"
+  },
+  "ports": {
+    "arlocal": 5000,
+    "mu": 5002,
+    "su": 5003,
+    "cu": 5004,
+    "scar": 5006,
+    "bundler": 5007,
+    "lunar": 5008
+  },
+  "services": {
+    "arlocal": {
+      "enabled": true,
+      "persist": true
+    },
+    "mu": {
+      "enabled": true
+    },
+    "su": {
+      "enabled": true,
+      "database": {
+        "user": "su_user",
+        "password": "su_pass",
+        "database": "su_db"
+      }
+    },
+    "cu": {
+      "enabled": true
+    },
+    "scar": {
+      "enabled": false
+    },
+    "bundler": {
+      "enabled": true
+    },
+    "lunar": {
+      "enabled": false
+    }
+  },
+  "urls": {
+    "gateway": "http://localhost:5000",
+    "graphql": "http://localhost:5000/graphql",
+    "mu": "http://localhost:5002",
+    "su": "http://localhost:5003",
+    "cu": "http://localhost:5004",
+    "bundler": "http://localhost:5007"
+  }
+}
+

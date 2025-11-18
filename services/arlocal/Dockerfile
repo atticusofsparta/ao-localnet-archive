@@ -1,7 +1,7 @@
 ################################################################################
 # Download
 
-FROM node:alpine AS downloader
+FROM node:22-alpine AS downloader
 WORKDIR /download
 
 RUN apk add git
@@ -13,7 +13,7 @@ RUN git clone --branch=${BRANCH} --depth=1 ${REPO} .
 ################################################################################
 # Build
 
-FROM node:alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /build
 COPY --from=downloader /download .
 
@@ -25,7 +25,7 @@ RUN yarn install
 ################################################################################
 # Run
 
-FROM node:alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 COPY --from=builder /build/bin bin
 COPY --from=builder /build/node_modules node_modules

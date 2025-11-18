@@ -23,6 +23,7 @@ The repository may helpful if you are doing one or more of the following:
 
 ```shell
 npm install https://github.com/MichaelBuhler/ao-localnet.git
+npx ao-localnet init          # create .ao-localnet.config.json (optional, customize first)
 npx ao-localnet configure     # generate wallets and download AOS module
 npx ao-localnet start         # run Docker containers (build them if necessary)
 npx ao-localnet seed          # seed AOS and Scheduler info into the localnet
@@ -34,6 +35,60 @@ npx ao-localnet reseed        # delete all data, then seed it again
 
 npx ao-localnet stop          # tear down Docker containers (data is retained)
 ```
+
+## Configuration
+
+**NEW**: AO Localnet now supports project-specific configuration!
+
+### Quick Config Setup
+
+```shell
+# Create config in your project
+npx ao-localnet init
+
+# View current configuration
+npm run config:show
+
+# Apply configuration (automatically runs on start)
+npm run config:apply
+```
+
+### What Can You Configure?
+
+- **Ports**: Change service ports to avoid conflicts (default: 4000-4008)
+- **Data Locations**: Specify where to store persistent data
+- **Wallet Paths**: Customize wallet file locations
+- **AOS Module**: Configure AOS module source
+- **Service URLs**: Set internal service communication URLs
+
+### Example: Custom Ports
+
+Edit `.ao-localnet.config.json`:
+
+```json
+{
+  "ports": {
+    "arlocal": 5000,
+    "mu": 5002,
+    "su": 5003,
+    "cu": 5004
+  },
+  "urls": {
+    "gateway": "http://localhost:5000",
+    "mu": "http://localhost:5002",
+    "cu": "http://localhost:5004"
+  }
+}
+```
+
+Then restart:
+
+```shell
+npm run stop
+npm run start  # Automatically applies config
+```
+
+📖 **See [CONFIG.md](./CONFIG.md) for complete configuration documentation.**
 
 ## Quick Start Guide (Run from source)
 

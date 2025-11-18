@@ -5,11 +5,15 @@
   },
   "scripts": {
     "aos": "./aos.sh",
-    "configure": "wallets/generateAll.sh && seed/download-aos-module.sh",
+    "init": "node config.mjs init",
+    "config:init": "node config.mjs init",
+    "config:apply": "node config.mjs apply",
+    "config:show": "node config.mjs show",
+    "configure": "npm run config:apply && wallets/generateAll.sh && seed/download-aos-module.sh",
     "reset": "seed/reset.mjs",
     "reseed": "seed/reset.mjs && seed/seed-for-aos.sh",
     "seed": "seed/seed-for-aos.sh",
-    "start": "docker compose up --detach",
+    "start": "npm run config:apply && docker compose up --detach",
     "stop": "docker compose down",
     "spawn": "./spawn.sh"
   },
