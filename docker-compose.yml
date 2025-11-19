@@ -57,8 +57,8 @@ services:
         COPY Cargo.toml Cargo.lock ./
         COPY src ./src
         COPY migrations ./migrations
-        # Patch SU to disable auth checks for localnet
-        RUN sed -i 's/return Err(Error::InvalidScheduler);/\/\/ Localnet: Disabled auth check/g' src/*.rs || true
+        # Patch SU to allow all IPs when whitelist is empty (for localnet)
+        RUN sed -i 's/Ok(ips) => ips\.contains(ip),/Ok(ips) => ips.is_empty() || ips.contains(ip),/g' src/main.rs
         RUN cargo build --release
 
         FROM debian:bookworm-slim as runner
