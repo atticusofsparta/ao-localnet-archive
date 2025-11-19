@@ -24,11 +24,6 @@ RUN sed -i "/RATE_LIMIT_FILE_URL: process.env.RATE_LIMIT_FILE_URL || '',/a\    D
 # 3. Parse DEFAULT_RATE_LIMIT in domain/index.js
 RUN sed -i '/^  let rateLimitFile = {}$/c\  // Parse DEFAULT_RATE_LIMIT from environment (JSON string)\n  let rateLimitFile = {}\n  try {\n    if (ctx.DEFAULT_RATE_LIMIT) {\n      rateLimitFile = typeof ctx.DEFAULT_RATE_LIMIT === "object" ? ctx.DEFAULT_RATE_LIMIT : JSON.parse(ctx.DEFAULT_RATE_LIMIT)\n      console.log("Loaded DEFAULT_RATE_LIMIT:", rateLimitFile)\n    }\n  } catch (e) {\n    console.error("Failed to parse DEFAULT_RATE_LIMIT:", e)\n  }' src/domain/index.js
 
-# Patch MU to skip waiting for CU results (for fast localnet testing)
-# This makes ao.message() return immediately (~100ms) instead of waiting for CU (~60s)
-# Trade-off: Messages may not be fully processed when ao.message() returns
-RUN sed -i 's/&no-busy=1//g' src/domain/clients/cu.js
-
 RUN npm install --ignore-engines --omit=dev
 
 ################################################################################
