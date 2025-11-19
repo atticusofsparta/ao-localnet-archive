@@ -22,7 +22,8 @@
     "test:spawn": "cd tests && npm install && npm run test:spawn",
     "test:message": "cd tests && npm install && npm run test:message",
     "test:pingpong": "cd tests && npm install && npm run test:pingpong",
-    "test:config": "cd tests && npm install && npm run test:config"
+    "test:config": "cd tests && npm install && npm run test:config",
+    "test:ratelimit": "cd tests && npm install && npm run test:ratelimit"
   },
   "dependencies": {
     "@permaweb/aos": "https://get_ao.g8way.io",

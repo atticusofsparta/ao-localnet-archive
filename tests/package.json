@@ -9,7 +9,8 @@
     "test:module": "tsx --test module.test.ts",
     "test:message": "tsx --test message.test.ts",
     "test:pingpong": "tsx --test pingpong.test.ts",
-    "test:config": "tsx --test config.test.ts"
+    "test:config": "tsx --test config.test.ts",
+    "test:ratelimit": "tsx --test ratelimit.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

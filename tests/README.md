@@ -21,6 +21,7 @@ npm run test:module     # Module deployment tests
 npm run test:message    # Message sending tests
 npm run test:pingpong   # Ping-pong cranking tests
 npm run test:config     # Configuration tests
+npm run test:ratelimit  # Rate limit tests
 
 # Watch mode
 npm run test:watch

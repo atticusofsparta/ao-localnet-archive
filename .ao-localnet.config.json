@@ -34,7 +34,7 @@
     "mu": {
       "enabled": true,
       "rateLimit": {
-        "maxRequests": 10000,
+        "maxRequests": 50000,
         "intervalMs": 3600000
       }
     },
