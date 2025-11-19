@@ -57,6 +57,8 @@ services:
         COPY Cargo.toml Cargo.lock ./
         COPY src ./src
         COPY migrations ./migrations
+        # Patch SU to disable auth checks for localnet
+        RUN sed -i 's/return Err(Error::InvalidScheduler);/\/\/ Localnet: Disabled auth check/g' src/*.rs || true
         RUN cargo build --release
 
         FROM debian:bookworm-slim as runner
@@ -72,6 +74,8 @@ services:
       - source: ao-wallet
         target: /app/ao-wallet.json
     env_file: ./services/su/.env
+    environment:
+      - SU_LOCALNET_MODE=true  # Flag for development mode
     ports:
       - 4003:80
 
