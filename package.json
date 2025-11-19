@@ -15,7 +15,14 @@
     "seed": "seed/seed-for-aos.sh",
     "start": "npm run config:apply && docker compose up --detach",
     "stop": "docker compose down",
-    "spawn": "./spawn.sh"
+    "spawn": "./spawn.sh",
+    "test": "cd tests && npm install && npm test",
+    "test:watch": "cd tests && npm run test:watch",
+    "test:module": "cd tests && npm install && npm run test:module",
+    "test:spawn": "cd tests && npm install && npm run test:spawn",
+    "test:message": "cd tests && npm install && npm run test:message",
+    "test:pingpong": "cd tests && npm install && npm run test:pingpong",
+    "test:config": "cd tests && npm install && npm run test:config"
   },
   "dependencies": {
     "@permaweb/aos": "https://get_ao.g8way.io",

@@ -1,0 +1,15 @@
+{
+  "name": "ao-localnet-hydration-examples",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Example scripts for hydrating transactions from mainnet to ao-localnet",
+  "scripts": {
+    "hydrate:module": "node hydrate-module.mjs",
+    "hydrate:fixtures": "node hydrate-fixtures.mjs",
+    "mint": "node mint-tokens.mjs"
+  },
+  "dependencies": {
+    "arweave": "^1.15.1"
+  }
+}
+

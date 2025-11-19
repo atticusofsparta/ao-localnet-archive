@@ -209,6 +209,43 @@ export function generateDockerComposeOverride(config) {
     };
   }
 
+  // MU rate limit configuration
+  if (config.services.mu?.rateLimit) {
+    override.services.mu = override.services.mu || {};
+    override.services.mu.environment = override.services.mu.environment || [];
+    override.services.mu.environment.push(
+      `IP_WALLET_RATE_LIMIT=${config.services.mu.rateLimit.maxRequests}`,
+      `IP_WALLET_RATE_LIMIT_INTERVAL=${config.services.mu.rateLimit.intervalMs}`
+    );
+  }
+
+  // CU supported module formats
+  if (config.services.cu?.supportedModuleFormats) {
+    override.services.cu = override.services.cu || {};
+    override.services.cu.environment = override.services.cu.environment || [];
+    override.services.cu.environment.push(
+      `PROCESS_WASM_SUPPORTED_FORMATS=${config.services.cu.supportedModuleFormats.join(',')}`
+    );
+  }
+
+  // CU memory and compute limits
+  if (config.services.cu?.limits) {
+    override.services.cu = override.services.cu || {};
+    override.services.cu.environment = override.services.cu.environment || [];
+    
+    if (config.services.cu.limits.maxMemory) {
+      override.services.cu.environment.push(
+        `PROCESS_WASM_MEMORY_MAX_LIMIT=${config.services.cu.limits.maxMemory}`
+      );
+    }
+    
+    if (config.services.cu.limits.maxCompute) {
+      override.services.cu.environment.push(
+        `PROCESS_WASM_COMPUTE_MAX_LIMIT=${config.services.cu.limits.maxCompute}`
+      );
+    }
+  }
+
   return override;
 }
 

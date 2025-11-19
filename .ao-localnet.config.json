@@ -10,12 +10,12 @@
     "bundlerWallet": "./wallets/bundler-wallet.json"
   },
   "data": {
-    "arlocal": "./services/arlocal/data",
-    "cu": "./services/cu/data",
-    "mu": "./services/mu/data",
-    "su": "./services/su/data",
+    "arlocal": "./.ao-localnet/arlocal",
+    "cu": "./.ao-localnet/cu",
+    "mu": "./.ao-localnet/mu",
+    "su": "./.ao-localnet/su",
     "suDatabase": "su-database-volume",
-    "bundler": "./services/bundler/data"
+    "bundler": "./.ao-localnet/bundler"
   },
   "ports": {
     "arlocal": 4000,
@@ -32,7 +32,11 @@
       "persist": true
     },
     "mu": {
-      "enabled": true
+      "enabled": true,
+      "rateLimit": {
+        "maxRequests": 10000,
+        "intervalMs": 3600000
+      }
     },
     "su": {
       "enabled": true,
@@ -43,7 +47,20 @@
       }
     },
     "cu": {
-      "enabled": true
+      "enabled": true,
+      "supportedModuleFormats": [
+        "wasm32-unknown-emscripten",
+        "wasm32-unknown-emscripten2",
+        "wasm32-unknown-emscripten3",
+        "wasm32-unknown-emscripten4",
+        "wasm64-unknown-emscripten-draft_2024_02_15",
+        "wasm32-unknown-emscripten-metering",
+        "wasm64-unknown-emscripten-draft_2024_10_16-metering"
+      ],
+      "limits": {
+        "maxMemory": "1073741824",
+        "maxCompute": "9000000000000"
+      }
     },
     "scar": {
       "enabled": true
@@ -62,6 +79,17 @@
     "su": "http://localhost:4003",
     "cu": "http://localhost:4004",
     "bundler": "http://localhost:4007"
+  },
+  "bootstrap": {
+    "transactions": {
+      "scheduler": "LAJfFkFD1reeJgZVjHCgLl0isGxdDB4oTQ64aFYzu60",
+      "testWalletMint": [
+        "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
+      ]
+    },
+    "wallets": {
+      "testWallet": "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
+    },
+    "lastBootstrap": "2025-11-19T19:26:54.229Z"
   }
 }
-

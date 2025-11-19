@@ -10,12 +10,12 @@
     "bundlerWallet": "./my-wallets/bundler-wallet.json"
   },
   "data": {
-    "arlocal": "./data/arlocal",
-    "cu": "./data/cu",
-    "mu": "./data/mu",
-    "su": "./data/su",
+    "arlocal": "./my-project/.ao-localnet/arlocal",
+    "cu": "./my-project/.ao-localnet/cu",
+    "mu": "./my-project/.ao-localnet/mu",
+    "su": "./my-project/.ao-localnet/su",
     "suDatabase": "su-database-volume",
-    "bundler": "./data/bundler"
+    "bundler": "./my-project/.ao-localnet/bundler"
   },
   "ports": {
     "arlocal": 5000,
@@ -32,7 +32,11 @@
       "persist": true
     },
     "mu": {
-      "enabled": true
+      "enabled": true,
+      "rateLimit": {
+        "maxRequests": 10000,
+        "intervalMs": 3600000
+      }
     },
     "su": {
       "enabled": true,
@@ -43,7 +47,20 @@
       }
     },
     "cu": {
-      "enabled": true
+      "enabled": true,
+      "supportedModuleFormats": [
+        "wasm32-unknown-emscripten",
+        "wasm32-unknown-emscripten2",
+        "wasm32-unknown-emscripten3",
+        "wasm32-unknown-emscripten4",
+        "wasm64-unknown-emscripten-draft_2024_02_15",
+        "wasm32-unknown-emscripten-metering",
+        "wasm64-unknown-emscripten-draft_2024_10_16-metering"
+      ],
+      "limits": {
+        "maxMemory": "1073741824",
+        "maxCompute": "9000000000000"
+      }
     },
     "scar": {
       "enabled": false
