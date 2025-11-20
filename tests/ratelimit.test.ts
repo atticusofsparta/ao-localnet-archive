@@ -189,5 +189,69 @@ describe('AO Localnet - Rate Limit Tests', () => {
     const requestsPerSecond = maxRequests / (intervalMs / 1000);
     console.log(`  ℹ️  Theoretical max throughput: ${requestsPerSecond.toFixed(2)} req/s`);
   });
+
+  test('should handle spawning multiple processes under rate limit', async () => {
+    console.log('🚀 Testing process spawning under rate limit...');
+    
+    const numProcesses = 30;
+    const spawnPromises = [];
+    
+    console.log(`  Spawning ${numProcesses} processes...`);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    const spawnedProcessIds: string[] = [];
+    
+    for (let i = 0; i < numProcesses; i++) {
+      const promise = (async () => {
+        try {
+          console.log(`  📝 Spawning process ${i + 1}/${numProcesses}...`);
+          const newProcessId = await ao.spawn({
+            module: testModuleId,
+            scheduler: testScheduler,
+            signer: signer,
+            tags: [
+              { name: 'Name', value: `RateLimitTest-Process-${i}` },
+              { name: 'Test-Batch', value: 'ProcessSpawn' },
+            ],
+          });
+          
+          successCount++;
+          spawnedProcessIds.push(newProcessId);
+          console.log(`  ✅ Process ${i + 1} spawned: ${newProcessId}`);
+          return newProcessId;
+        } catch (error: any) {
+          errorCount++;
+          console.log(`  ❌ Process ${i + 1} failed: ${error.message}`);
+          
+          // Check if it's a rate limit error
+          if (error.message && (
+            error.message.includes('rate limit') ||
+            error.message.includes('429') ||
+            error.message.includes('Too Many Requests')
+          )) {
+            console.log(`  ⚠️  Rate limit hit at process ${i + 1}`);
+          }
+          return null;
+        }
+      })();
+      
+      spawnPromises.push(promise);
+      
+      // Add a small delay between spawns to avoid overwhelming the system
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    await Promise.all(spawnPromises);
+    
+    console.log(`  📊 Spawn Results: ${successCount} success, ${errorCount} errors`);
+    console.log(`  ✅ Process spawning completed (${((successCount / numProcesses) * 100).toFixed(1)}% success rate)`);
+    
+    // We expect at least most processes to succeed
+    assert.ok(successCount > 0, 'At least some processes should spawn successfully');
+    assert.ok(successCount >= numProcesses * 0.7, 'At least 70% of processes should spawn under rate limit');
+    
+    console.log(`  ℹ️  Successfully spawned ${spawnedProcessIds.length} processes`);
+  });
 });
 

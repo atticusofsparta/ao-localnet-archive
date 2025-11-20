@@ -12,19 +12,25 @@ const __dirname = dirname(__filename);
  * Falls back to defaults if config file doesn't exist
  */
 export function loadConfig() {
-  const configPath = resolve(process.cwd(), '.ao-localnet.config.json');
-  const defaultConfigPath = resolve(__dirname, '.ao-localnet.config.json');
+  // When running via CLI, check user's original directory first
+  const userDir = process.env.AO_LOCALNET_USER_DIR || process.cwd();
+  const userConfigPath = resolve(userDir, '.ao-localnet.config.json');
+  
+  // Use package directory if set (when installed via npm), otherwise use __dirname
+  const packageDir = process.env.AO_LOCALNET_PACKAGE_DIR || __dirname;
+  const defaultConfigPath = resolve(packageDir, '.ao-localnet.config.json');
   
   let config;
   
-  if (existsSync(configPath)) {
-    console.log('Loading config from:', configPath);
-    config = JSON.parse(readFileSync(configPath, 'utf8'));
+  // Priority: user's config -> package default config
+  if (existsSync(userConfigPath)) {
+    console.log('Loading config from:', userConfigPath);
+    config = JSON.parse(readFileSync(userConfigPath, 'utf8'));
   } else if (existsSync(defaultConfigPath)) {
     console.log('Loading default config from:', defaultConfigPath);
     config = JSON.parse(readFileSync(defaultConfigPath, 'utf8'));
   } else {
-    throw new Error('No configuration file found. Run `npm run config:init` to create one.');
+    throw new Error('No configuration file found. Run `npx ao-localnet init` to create one.');
   }
   
   return config;
@@ -35,6 +41,7 @@ export function loadConfig() {
  */
 export function generateDockerComposeOverride(config) {
   const override = {
+    name: 'ao-localnet-archive',
     version: '3.8',
     services: {}
   };
@@ -85,16 +92,19 @@ export function generateDockerComposeOverride(config) {
   }
 
   // Add data volume binds
+  // Use user's directory for resolving relative paths
+  const userDir = process.env.AO_LOCALNET_USER_DIR || process.cwd();
+  
   if (config.data) {
     // ArLocal data
     if (config.data.arlocal && config.services.arlocal?.enabled !== false) {
       override.services.arlocal = override.services.arlocal || {};
+      const arLocalDir = resolve(userDir, config.data.arlocal);
       override.services.arlocal.volumes = [
-        `${resolve(config.data.arlocal)}:/app/db`
+        `${arLocalDir}:/app/db`
       ];
       
       // Ensure directory exists
-      const arLocalDir = resolve(process.cwd(), config.data.arlocal);
       if (!existsSync(arLocalDir)) {
         mkdirSync(arLocalDir, { recursive: true });
         console.log('Created directory:', arLocalDir);
@@ -105,11 +115,11 @@ export function generateDockerComposeOverride(config) {
     if (config.data.cu && config.services.cu?.enabled !== false) {
       override.services.cu = override.services.cu || {};
       override.services.cu.volumes = override.services.cu.volumes || [];
+      const cuDir = resolve(userDir, config.data.cu);
       override.services.cu.volumes.push(
-        `${resolve(config.data.cu)}:/usr/app/data`
+        `${cuDir}:/usr/app/data`
       );
       
-      const cuDir = resolve(process.cwd(), config.data.cu);
       if (!existsSync(cuDir)) {
         mkdirSync(cuDir, { recursive: true });
         console.log('Created directory:', cuDir);
@@ -120,11 +130,11 @@ export function generateDockerComposeOverride(config) {
     if (config.data.mu && config.services.mu?.enabled !== false) {
       override.services.mu = override.services.mu || {};
       override.services.mu.volumes = override.services.mu.volumes || [];
+      const muDir = resolve(userDir, config.data.mu);
       override.services.mu.volumes.push(
-        `${resolve(config.data.mu)}:/usr/app/data`
+        `${muDir}:/usr/app/data`
       );
       
-      const muDir = resolve(process.cwd(), config.data.mu);
       if (!existsSync(muDir)) {
         mkdirSync(muDir, { recursive: true });
         console.log('Created directory:', muDir);
@@ -135,11 +145,11 @@ export function generateDockerComposeOverride(config) {
     if (config.data.su && config.services.su?.enabled !== false) {
       override.services.su = override.services.su || {};
       override.services.su.volumes = override.services.su.volumes || [];
+      const suDir = resolve(userDir, config.data.su);
       override.services.su.volumes.push(
-        `${resolve(config.data.su)}:/app/data`
+        `${suDir}:/app/data`
       );
       
-      const suDir = resolve(process.cwd(), config.data.su);
       if (!existsSync(suDir)) {
         mkdirSync(suDir, { recursive: true });
         console.log('Created directory:', suDir);
@@ -150,11 +160,11 @@ export function generateDockerComposeOverride(config) {
     if (config.data.bundler && config.services.bundler?.enabled !== false) {
       override.services.bundler = override.services.bundler || {};
       override.services.bundler.volumes = override.services.bundler.volumes || [];
+      const bundlerDir = resolve(userDir, config.data.bundler);
       override.services.bundler.volumes.push(
-        `${resolve(config.data.bundler)}:/app/data`
+        `${bundlerDir}:/app/data`
       );
       
-      const bundlerDir = resolve(process.cwd(), config.data.bundler);
       if (!existsSync(bundlerDir)) {
         mkdirSync(bundlerDir, { recursive: true });
         console.log('Created directory:', bundlerDir);
@@ -164,7 +174,7 @@ export function generateDockerComposeOverride(config) {
 
   // Add wallet paths
   if (config.wallets) {
-    const walletDir = resolve(process.cwd(), config.wallets.directory);
+    const walletDir = resolve(userDir, config.wallets.directory);
     if (!existsSync(walletDir)) {
       mkdirSync(walletDir, { recursive: true });
       console.log('Created directory:', walletDir);
@@ -209,15 +219,15 @@ export function generateDockerComposeOverride(config) {
     };
   }
 
-  // MU rate limit configuration
-  if (config.services.mu?.rateLimit) {
-    override.services.mu = override.services.mu || {};
-    override.services.mu.environment = override.services.mu.environment || [];
-    override.services.mu.environment.push(
-      `IP_WALLET_RATE_LIMIT=${config.services.mu.rateLimit.maxRequests}`,
-      `IP_WALLET_RATE_LIMIT_INTERVAL=${config.services.mu.rateLimit.intervalMs}`
-    );
-  }
+  // MU rate limit configuration (disabled - using pre-rate-limit MU version)
+  // if (config.services.mu?.rateLimit) {
+  //   override.services.mu = override.services.mu || {};
+  //   override.services.mu.environment = override.services.mu.environment || [];
+  //   override.services.mu.environment.push(
+  //     `IP_WALLET_RATE_LIMIT=${config.services.mu.rateLimit.maxRequests}`,
+  //     `IP_WALLET_RATE_LIMIT_INTERVAL=${config.services.mu.rateLimit.intervalMs}`
+  //   );
+  // }
 
   // CU supported module formats
   if (config.services.cu?.supportedModuleFormats) {
@@ -285,7 +295,9 @@ function objectToYaml(obj, indent = 0) {
  * Save docker-compose override file
  */
 export function saveDockerComposeOverride(override) {
-  const overridePath = resolve(process.cwd(), 'docker-compose.override.yml');
+  // Use package directory for docker-compose.override.yml (where docker-compose.yml is)
+  const packageDir = process.env.AO_LOCALNET_PACKAGE_DIR || __dirname;
+  const overridePath = resolve(packageDir, 'docker-compose.override.yml');
   const yaml = objectToYaml(override);
   writeFileSync(overridePath, yaml, 'utf8');
   console.log('Generated:', overridePath);
@@ -296,16 +308,44 @@ export function saveDockerComposeOverride(override) {
  */
 export function initConfig() {
   const configPath = resolve(process.cwd(), '.ao-localnet.config.json');
-  const defaultConfigPath = resolve(__dirname, '.ao-localnet.config.json');
+  
+  // Use package directory if set (when installed via npm), otherwise use __dirname
+  const packageDir = process.env.AO_LOCALNET_PACKAGE_DIR || __dirname;
+  const exampleConfigPath = resolve(packageDir, '.ao-localnet.config.example.json');
+  const defaultConfigPath = resolve(packageDir, '.ao-localnet.config.json');
   
   if (existsSync(configPath)) {
-    console.log('Config file already exists:', configPath);
+    console.log('✅ Config file already exists:', configPath);
     return;
   }
   
-  const defaultConfig = JSON.parse(readFileSync(defaultConfigPath, 'utf8'));
+  // Try example config first, then default config
+  let templatePath = exampleConfigPath;
+  if (!existsSync(exampleConfigPath)) {
+    templatePath = defaultConfigPath;
+  }
+  
+  if (!existsSync(templatePath)) {
+    console.error('❌ Could not find template config file');
+    console.error('   Looked for:', exampleConfigPath);
+    console.error('   And:', defaultConfigPath);
+    process.exit(1);
+  }
+  
+  const defaultConfig = JSON.parse(readFileSync(templatePath, 'utf8'));
+  
+  // Remove bootstrap section from template (user-specific)
+  if (defaultConfig.bootstrap) {
+    delete defaultConfig.bootstrap;
+  }
+  
   writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf8');
-  console.log('Created config file:', configPath);
+  console.log('✅ Created config file:', configPath);
+  console.log('');
+  console.log('Next steps:');
+  console.log('  1. Edit .ao-localnet.config.json to customize your setup');
+  console.log('  2. Run: npx ao-localnet configure');
+  console.log('  3. Run: npx ao-localnet start');
 }
 
 /**

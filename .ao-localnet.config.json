@@ -32,11 +32,7 @@
       "persist": true
     },
     "mu": {
-      "enabled": true,
-      "rateLimit": {
-        "maxRequests": 50000,
-        "intervalMs": 3600000
-      }
+      "enabled": true
     },
     "su": {
       "enabled": true,
