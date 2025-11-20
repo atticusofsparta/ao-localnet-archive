@@ -78,14 +78,17 @@
   },
   "bootstrap": {
     "transactions": {
-      "scheduler": "LAJfFkFD1reeJgZVjHCgLl0isGxdDB4oTQ64aFYzu60",
+      "scheduler": "s2yVCqphh0smC01A0feRoL_nMvcIS0bnhW6itEIengc",
       "testWalletMint": [
         "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
-      ]
+      ],
+      "schedulerLocation": "JPXh3Y1590uvW1MnnfDkTSACB64cnTRxQ9VlFjWyQ-I",
+      "aosModule": "csVTAYSiq_OimKjVArqeBdC1ZWBQmJpYHhtlYEKSQJI",
+      "aosModulePublisher": "_xRBR7Y32SO7v8fHImuh3CpvRcYEvBLPvcLGerBO2t4"
     },
     "wallets": {
       "testWallet": "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
     },
-    "lastBootstrap": "2025-11-19T19:26:54.229Z"
+    "lastBootstrap": "2025-11-20T15:24:06.287Z"
   }
 }

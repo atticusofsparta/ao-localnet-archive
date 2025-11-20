@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { instance as arweave } from './utils/arweave.mjs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const wallet = JSON.parse(await readFile(import.meta.resolve('../wallets/aos-module-publisher-wallet.json').slice(7), 'utf8'))
 const address = await arweave.wallets.getAddress(wallet)
@@ -34,6 +39,20 @@ const res = await arweave.transactions.post(tx)
 if (res.status === 200) {
   console.log(`${res.status} ${res.statusText}`)
   console.log(`aos module: ${tx.id}`)
+  
+  // Update config with module info
+  const configPath = resolve(__dirname, '../.ao-localnet.config.json')
+  const config = JSON.parse(await readFile(configPath, 'utf8'))
+  
+  if (!config.bootstrap) config.bootstrap = {}
+  if (!config.bootstrap.transactions) config.bootstrap.transactions = {}
+  
+  config.bootstrap.transactions.aosModule = tx.id
+  config.bootstrap.transactions.aosModulePublisher = address
+  config.bootstrap.lastBootstrap = new Date().toISOString()
+  
+  await writeFile(configPath, JSON.stringify(config, null, 2), 'utf8')
+  console.log(`✅ Saved AOS module to config: ${tx.id}`)
 } else {
   console.log(`${res.status} ${JSON.stringify(res.statusText, null, 2)}`)
 }

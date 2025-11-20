@@ -256,23 +256,6 @@ describe('AO Localnet - Configuration Tests', () => {
       console.log('✅ All services configured');
     });
 
-    it('should have MU rate limit configured', () => {
-      console.log('⏱️  Checking MU rate limit...');
-
-      assert.ok(config.services.mu.rateLimit, 'MU should have rate limit config');
-      assert.ok(
-        typeof config.services.mu.rateLimit.maxRequests === 'number',
-        'MU rate limit maxRequests should be a number'
-      );
-      assert.ok(
-        typeof config.services.mu.rateLimit.intervalMs === 'number',
-        'MU rate limit intervalMs should be a number'
-      );
-
-      console.log(`  ✅ Max requests: ${config.services.mu.rateLimit.maxRequests}`);
-      console.log(`  ✅ Interval: ${config.services.mu.rateLimit.intervalMs}ms`);
-    });
-
     it('should have CU supported formats configured', () => {
       console.log('📦 Checking CU module formats...');
 
@@ -415,25 +398,6 @@ describe('AO Localnet - Configuration Tests', () => {
       console.log('✅ docker-compose.override.yml generated correctly');
     });
 
-    it('should include rate limit env vars in override', async () => {
-      console.log('⏱️  Verifying rate limit environment variables...');
-
-      const overridePath = resolve(__dirname, '..', 'docker-compose.override.yml');
-
-      if (!existsSync(overridePath)) {
-        console.log('⚠️  docker-compose.override.yml not found - skip');
-        return;
-      }
-
-      const overrideContent = readFileSync(overridePath, 'utf8');
-
-      assert.ok(
-        overrideContent.includes('IP_WALLET_RATE_LIMIT'),
-        'Override should include IP_WALLET_RATE_LIMIT'
-      );
-
-      console.log('✅ Rate limit variables present in override');
-    });
   });
 });
 

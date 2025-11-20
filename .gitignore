@@ -1,6 +1,7 @@
 
 # ignore these folders in any folder
 node_modules/
+dist/
 
 # ignore these files in any folder
 .DS_Store

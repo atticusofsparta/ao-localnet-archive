@@ -41,25 +41,11 @@ before(async () => {
 });
 
 describe('AO Localnet - Rate Limit Tests', () => {
-  test('should have rate limit configured', async () => {
-    console.log('📊 Checking rate limit configuration...');
-    
-    const config = loadConfig();
-    
-    assert.ok(config.services.mu, 'MU service should be configured');
-    assert.ok(config.services.mu.rateLimit, 'MU should have rate limit configuration');
-    assert.ok(config.services.mu.rateLimit.maxRequests, 'Should have maxRequests configured');
-    assert.ok(config.services.mu.rateLimit.intervalMs, 'Should have intervalMs configured');
-    
-    console.log(`  ✅ Max Requests: ${config.services.mu.rateLimit.maxRequests}`);
-    console.log(`  ✅ Interval: ${config.services.mu.rateLimit.intervalMs}ms (${config.services.mu.rateLimit.intervalMs / 1000 / 60}min)`);
-  });
-
   test('should allow requests under the rate limit', async () => {
     console.log('📨 Sending messages under rate limit...');
     
     const numMessages = 100;
-    const messagePromises = [];
+    const messagePromises: Promise<string>[] = [];
     
     for (let i = 0; i < numMessages; i++) {
       console.log(`  Sending message ${i + 1}/${numMessages}...`);
@@ -158,43 +144,15 @@ describe('AO Localnet - Rate Limit Tests', () => {
     // We expect at least some messages to succeed
     assert.ok(successCount > 0, 'At least some messages should succeed under load');
     
-    // If we're under the rate limit, most should succeed
-    const config2 = loadConfig();
-    const rateLimit = config2.services.mu.rateLimit.maxRequests;
-    if (batchSize < rateLimit / 10) {
-      // If we're well under the limit, expect high success rate
-      assert.ok(successCount >= batchSize * 0.8, 'Most messages should succeed when under rate limit');
-    }
-  });
-
-  test('should respect configured rate limit values', async () => {
-    console.log('⚙️  Verifying rate limit configuration values...');
-    
-    const config = loadConfig();
-    const maxRequests = config.services.mu.rateLimit.maxRequests;
-    const intervalMs = config.services.mu.rateLimit.intervalMs;
-    
-    // Verify the values are reasonable
-    assert.ok(maxRequests > 0, 'Max requests should be positive');
-    assert.ok(intervalMs > 0, 'Interval should be positive');
-    
-    // Check they match expected defaults or are reasonable
-    assert.ok(maxRequests >= 1000, 'Max requests should be at least 1000 for dev');
-    assert.ok(intervalMs >= 60000, 'Interval should be at least 1 minute');
-    
-    console.log(`  ✅ Rate limit: ${maxRequests} requests per ${intervalMs / 1000}s`);
-    console.log(`  ✅ Rate: ${(maxRequests / (intervalMs / 1000)).toFixed(2)} req/s`);
-    
-    // Calculate expected throughput
-    const requestsPerSecond = maxRequests / (intervalMs / 1000);
-    console.log(`  ℹ️  Theoretical max throughput: ${requestsPerSecond.toFixed(2)} req/s`);
+    // Most messages should succeed since we're using pre-rate-limit version
+    assert.ok(successCount >= batchSize * 0.8, 'Most messages should succeed');
   });
 
   test('should handle spawning multiple processes under rate limit', async () => {
     console.log('🚀 Testing process spawning under rate limit...');
     
     const numProcesses = 30;
-    const spawnPromises = [];
+    const spawnPromises: Promise<string | null>[] = [];
     
     console.log(`  Spawning ${numProcesses} processes...`);
     

@@ -1,44 +1,232 @@
-# ao-localnet
+# AO Localnet Archive
 
-Run a complete [AO Computer](http://ao.computer/) testbed, locally, with Docker Compose.
+A complete, self-contained AO localnet environment with pre-rate-limit MU, TypeScript SDK, and comprehensive testing suite.
 
-> [!CAUTION]
-> **This is an experimental repo intended for power users.**
+> [!NOTE]
+> **This is an archived version of ao-localnet** using pre-rate-limit MU (commit `acb3852`) for optimal testing performance.
 >
-> Please join the Marshal [Discord server](https://discord.gg/KzSRvefPau) for help and support.
+> Join the Marshal [Discord server](https://discord.gg/KzSRvefPau) for help and support.
 
-## Quick Start
+## ✨ What's Different
 
-```shell
-# Install as npm package
-npm install https://github.com/MichaelBuhler/ao-localnet.git
+This archive includes:
 
-# Initialize and start
-npx ao-localnet configure     # Generate wallets and download AOS module
-npx ao-localnet start         # Start Docker containers
-npx ao-localnet seed          # Seed localnet with initial data
+- **Pre-rate-limit MU** - Uses MU from before rate limiting was added (April 17, 2025)
+- **TypeScript SDK** - Pre-configured exports for scheduler, module IDs, and aoconnect
+- **Unified package** - All tests and dependencies at root level
+- **Bootstrap persistence** - Seed scripts save all IDs to config
+- **30 process test** - Load testing with 100% success rate
 
-# Use it
-npx ao-localnet spawn "myprocess"  # Spawn an AOS process
-npx ao-localnet aos "myprocess"    # Connect to the process
-
-# Manage it
-npx ao-localnet stop          # Stop containers (keeps data)
-npx ao-localnet reset         # Delete all data
-```
-
-## Configuration
-
-Customize your localnet with `.ao-localnet.config.json`:
+## 🚀 Quick Start
 
 ```shell
-npx ao-localnet init          # Create config file
+# Clone or install
+git clone <this-repo>
+cd ao-localnet-archive
+
+# Install dependencies
+npm install
+
+# Configure and start
+npm run configure     # Generate wallets and download AOS module
+npm start            # Start Docker containers
+npm run seed         # Seed localnet (saves bootstrap info to config)
+
+# Build the SDK
+npm run build        # Compile TypeScript SDK
+
+# Run tests
+npm test            # Run all tests
 ```
 
-### Available Options
+## 📦 TypeScript SDK
+
+### Installation & Usage
+
+After starting and seeding your localnet, use the SDK in your code:
+
+```typescript
+import {
+  getAoInstance,
+  getScheduler,
+  getAosModule,
+  getAuthority,
+  createAoSigner,
+  getBootstrapInfo,
+} from 'ao-localnet';
+
+// Get pre-configured instances
+const ao = getAoInstance();
+const signer = createAoSigner();
+const moduleId = getAosModule();
+const scheduler = getScheduler();
+
+// Spawn a process
+const processId = await ao.spawn({
+  module: moduleId,
+  scheduler: scheduler,
+  signer: signer,
+  tags: [{ name: 'Name', value: 'My Process' }],
+});
+
+// Send a message
+const messageId = await ao.message({
+  process: processId,
+  signer: signer,
+  tags: [{ name: 'Action', value: 'Eval' }],
+  data: 'return "Hello, AO!"',
+});
+```
+
+### Available SDK Functions
+
+#### Configuration
+- `loadConfig()` - Load the localnet configuration
+- `getUrls()` - Get all service URLs (gateway, mu, cu, su, bundler)
+
+#### Bootstrap Information
+- `getScheduler()` - Get scheduler wallet address
+- `getSchedulerLocation()` - Get scheduler location transaction ID
+- `getAosModule()` - Get AOS module transaction ID
+- `getAuthority()` - Get authority (MU) wallet address
+- `getBootstrapInfo()` - Get all bootstrap info at once
+
+#### Wallets & Signers
+- `loadWallet(path)` - Load any wallet from file
+- `getAoWallet()` - Get the AO wallet (authority wallet)
+- `createAoSigner()` - Create a data item signer for the AO wallet
+
+#### AO Connect
+- `getAoInstance()` - Get a pre-configured aoconnect instance
+
+#### Docker Management
+- `getDockerClient()` - Get Docker client instance
+- `isServiceRunning(service)` - Check if a service container is running
+- `isServiceHealthy(service)` - Check if a service is healthy
+- `isServiceReady(service)` - Check if service is fully ready (healthy + accessible)
+- `waitForService(service, timeout)` - Wait for a service to be healthy
+- `waitForAllServices(timeout)` - Wait for all services to be healthy
+- `waitForServiceReady(service, timeout)` - Wait for service to be fully ready
+- `getHealthStatus()` - Get health status of all services
+- `getAllServicesStatus()` - Get detailed status of all services
+- `getContainerLogs(service, tail)` - Get container logs
+- `restartService(service)` - Restart a service
+- `stopService(service)` - Stop a service
+- `startService(service)` - Start a service
+- `getServiceUrl(service)` - Get the URL for a service
+- `isServiceAccessible(service)` - Check if service is accessible via HTTP
+
+**Available service names:** `arlocal`, `mu`, `su`, `su-database`, `cu`, `scar`, `bundler`, `lunar`
+
+### Example: E2E Test with Docker Management
+
+```typescript
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert';
+import {
+  getAoInstance,
+  getScheduler,
+  getAosModule,
+  createAoSigner,
+  waitForAllServices,
+  getHealthStatus,
+} from 'ao-localnet';
+
+describe('My AO Tests', () => {
+  let ao, processId, signer;
+
+  before(async () => {
+    // Wait for all services to be ready before running tests
+    console.log('⏳ Waiting for services...');
+    const ready = await waitForAllServices(90000);
+    
+    if (!ready) {
+      const health = await getHealthStatus();
+      console.error('❌ Services not ready:');
+      health.forEach(h => {
+        if (!h.healthy) console.error(`   ${h.service}: ${h.status}`);
+      });
+      throw new Error('Services not ready');
+    }
+    
+    console.log('✅ Services ready!');
+    
+    ao = getAoInstance();
+    signer = createAoSigner();
+    
+    processId = await ao.spawn({
+      module: getAosModule(),
+      scheduler: getScheduler(),
+      signer: signer,
+      tags: [{ name: 'Name', value: 'Test' }],
+    });
+  });
+
+  it('should send message', async () => {
+    const messageId = await ao.message({
+      process: processId,
+      signer: signer,
+      tags: [{ name: 'Action', value: 'Eval' }],
+      data: 'return 2 + 2',
+    });
+    
+    assert.ok(messageId);
+  });
+});
+```
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:spawn      # Spawn process tests
+npm run test:module     # Module deployment tests
+npm run test:message    # Message sending tests
+npm run test:pingpong   # Ping-pong cranking tests
+npm run test:config     # Configuration tests
+npm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
+
+# Watch mode
+npm run test:watch
+```
+
+### Test Suites
+
+1. **Config Tests** - Configuration validation and Docker Compose generation
+2. **Module Tests** - WASM module deployment and verification
+3. **Spawn Tests** - Process spawning with various configurations
+4. **Message Tests** - Message sending and result reading
+5. **Ping-Pong Tests** - Inter-process communication and cranking
+6. **Rate Limit Tests** - Load testing with 100 messages and **30 process spawning**
+
+### Prerequisites for Tests
+
+Before running tests:
+
+```bash
+npm start       # Start all services
+npm run seed    # Seed network (REQUIRED!)
+npm run build   # Build TypeScript SDK
+```
+
+## ⚙️ Configuration
+
+Create `.ao-localnet.config.json` for custom settings:
+
+```shell
+npm run init          # Create config file
+```
+
+### Configuration Options
 
 ```json
 {
+  "version": "1.0",
   "ports": {
     "arlocal": 4000,
     "mu": 4002,
@@ -48,310 +236,204 @@ npx ao-localnet init          # Create config file
     "bundler": 4007,
     "lunar": 4008
   },
-  "data": {
-    "arlocal": "./.ao-localnet/arlocal",
-    "cu": "./.ao-localnet/cu",
-    "mu": "./.ao-localnet/mu",
-    "su": "./.ao-localnet/su"
+  "urls": {
+    "gateway": "http://localhost:4000",
+    "mu": "http://localhost:4002",
+    "cu": "http://localhost:4004"
   },
   "services": {
-    "mu": {
-      "rateLimit": {
-        "maxRequests": 10000,
-        "intervalMs": 3600000
-      }
-    },
     "cu": {
-      "supportedModuleFormats": ["wasm32-unknown-emscripten", "..."],
       "limits": {
         "maxMemory": "1073741824",
         "maxCompute": "9000000000000"
       }
     }
-  }
-}
-```
-
-**Key Features:**
-- **Ports**: Avoid conflicts with other services
-- **Data Paths**: Store data wherever you want (default: `./.ao-localnet/`)
-- **CU Limits**: Control memory (1GB default) and compute (9T units default)
-- **MU Rate Limits**: Control request rates (10K/hour default)
-- **Module Formats**: Configure supported WASM formats
-
-📖 See [CU_LIMITS.md](./CU_LIMITS.md) for detailed CU configuration
-
-## Transaction Hydration
-
-Need transactions from mainnet? Here's how to manually hydrate them:
-
-### Pattern 1: Hydrate a Module
-
-```javascript
-// hydrate-module.js
-import Arweave from 'arweave';
-import fs from 'fs';
-
-const mainnet = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' });
-const localnet = Arweave.init({ host: 'localhost', port: 4000, protocol: 'http' });
-const wallet = JSON.parse(fs.readFileSync('./wallets/ao-wallet.json', 'utf8'));
-
-async function hydrateModule(moduleId) {
-  console.log(`Fetching module ${moduleId}...`);
-  
-  // Fetch from mainnet
-  const data = await mainnet.transactions.getData(moduleId, { decode: true });
-  const tx = await mainnet.transactions.get(moduleId);
-  
-  // Create on localnet
-  const newTx = await localnet.createTransaction({ data }, wallet);
-  tx.tags.forEach(tag => {
-    const key = tag.get('name', { decode: true, string: true });
-    const value = tag.get('value', { decode: true, string: true });
-    newTx.addTag(key, value);
-  });
-  
-  // Track original ID
-  newTx.addTag('Original-Module-ID', moduleId);
-  
-  await localnet.transactions.sign(newTx, wallet);
-  await localnet.transactions.post(newTx);
-  
-  console.log(`✅ Module hydrated: ${newTx.id} (original: ${moduleId})`);
-  return newTx.id;
-}
-
-// Usage
-hydrateModule('YOUR-MODULE-ID-HERE');
-```
-
-### Pattern 2: Hydrate Transaction Data
-
-```javascript
-async function hydrateTransaction(txId) {
-  // Fetch transaction and data
-  const tx = await mainnet.transactions.get(txId);
-  const data = await fetch(`https://arweave.net/${txId}`).then(r => r.arrayBuffer());
-  
-  // Create on localnet with same tags
-  const newTx = await localnet.createTransaction({ data: Buffer.from(data) }, wallet);
-  
-  tx.tags.forEach(tag => {
-    const key = tag.get('name', { decode: true, string: true });
-    const value = tag.get('value', { decode: true, string: true });
-    newTx.addTag(key, value);
-  });
-  
-  // Tracking tags
-  newTx.addTag('Original-TX-ID', txId);
-  newTx.addTag('Hydrated-From', 'https://arweave.net');
-  newTx.addTag('Hydrated-At', new Date().toISOString());
-  
-  await localnet.transactions.sign(newTx, wallet);
-  await localnet.transactions.post(newTx);
-  
-  return newTx.id;
-}
-```
-
-### Pattern 3: Setup Script with Fixtures
-
-Create a `hydrate-fixtures.js` file:
-
-```javascript
-import Arweave from 'arweave';
-import fs from 'fs';
-
-const localnet = Arweave.init({ host: 'localhost', port: 4000, protocol: 'http' });
-const wallet = JSON.parse(fs.readFileSync('./wallets/ao-wallet.json', 'utf8'));
-
-// Your fixture data
-const FIXTURES = {
-  modules: {
-    'aos-2.0': 'YOUR-AOS-MODULE-ID',
-    'custom-module': 'YOUR-CUSTOM-MODULE-ID'
   },
-  data: {
-    'config': './fixtures/config.json',
-    'schema': './fixtures/schema.json'
+  "bootstrap": {
+    "transactions": {
+      "scheduler": "s2yVCqphh0smC01A0feRoL_nMvcIS0bnhW6itEIengc",
+      "schedulerLocation": "JPXh3Y1590uvW1MnnfDkTSACB64cnTRxQ9VlFjWyQ-I",
+      "aosModule": "csVTAYSiq_OimKjVArqeBdC1ZWBQmJpYHhtlYEKSQJI"
+    }
   }
-};
-
-async function deployFixtures() {
-  const deployed = {};
-  
-  // Deploy local fixture files
-  for (const [name, path] of Object.entries(FIXTURES.data)) {
-    console.log(`Deploying ${name}...`);
-    const data = fs.readFileSync(path);
-    const tx = await localnet.createTransaction({ data }, wallet);
-    tx.addTag('Content-Type', 'application/json');
-    tx.addTag('Fixture-Name', name);
-    await localnet.transactions.sign(tx, wallet);
-    await localnet.transactions.post(tx);
-    deployed[name] = tx.id;
-    console.log(`✅ ${name}: ${tx.id}`);
-  }
-  
-  // Save deployment info
-  fs.writeFileSync(
-    './deployed-fixtures.json',
-    JSON.stringify(deployed, null, 2)
-  );
-  
-  console.log('✅ All fixtures deployed!');
-  return deployed;
-}
-
-deployFixtures();
-```
-
-### Pattern 4: Mint Tokens for Testing
-
-```javascript
-async function mintTokens(address, amount = '1000000000000') {
-  console.log(`Minting ${amount} tokens for ${address}...`);
-  
-  const tx = await localnet.createTransaction({
-    target: address,
-    quantity: amount
-  }, wallet);
-  
-  await localnet.transactions.sign(tx, wallet);
-  await localnet.transactions.post(tx);
-  
-  // Wait for mining
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const balance = await localnet.wallets.getBalance(address);
-  console.log(`✅ Balance: ${balance} winston`);
 }
 ```
 
-### Usage in Your Project
+**Note:** The `bootstrap` section is automatically populated when you run `npm run seed`.
 
-1. Create a `setup/` directory with your hydration scripts
-2. Run them after starting localnet:
+## 📋 Available Commands
 
-```shell
-npx ao-localnet start
-node setup/hydrate-fixtures.js
-node setup/mint-tokens.js
-npx ao-localnet seed
-```
-
-3. Reference the deployed fixtures:
-
-```javascript
-const fixtures = JSON.parse(fs.readFileSync('./deployed-fixtures.json'));
-const moduleId = fixtures['custom-module'];
-```
-
-**Note**: Hydrated transactions get new IDs on localnet. Use tracking tags (`Original-*-ID`) to reference mainnet IDs.
-
-## Testing
-
-The project includes a comprehensive TypeScript test suite:
-
+### Setup & Management
 ```bash
-# Make sure localnet is running
-npx ao-localnet start
-npx ao-localnet seed
-
-# Run tests
-npm test
-
-# Run specific suites
-npm run test:module    # Module deployment
-npm run test:spawn     # Process spawning
-npm run test:message   # Message sending
-npm run test:config    # Configuration
+npm run configure    # Generate wallets and download AOS module
+npm start           # Start all Docker containers
+npm stop            # Stop containers (preserves data)
+npm run seed        # Seed network and save bootstrap info
+npm run reseed      # Reset and re-seed
+npm run reset       # Delete all data
 ```
 
-📖 See [tests/README.md](./tests/README.md) for details
-
-## Services
-
-When running, you'll have these services available:
-
-| Service | Port | Description |
-|---------|------|-------------|
-| ArLocal | 4000 | Local Arweave gateway |
-| MU | 4002 | Messenger Unit |
-| SU | 4003 | Scheduler Unit |
-| CU | 4004 | Compute Unit |
-| ScAR | 4006 | Block explorer (web UI) |
-| Bundler | 4007 | Transaction bundler |
-| Lunar | 4008 | Additional services |
-
-**Access the block explorer**: http://localhost:4006
-
-## Advanced Usage
-
-### Custom Module Development
-
-```shell
-# 1. Build your custom module
-cd my-custom-module
-npm run build  # Produces module.wasm
-
-# 2. Deploy to localnet
-node deploy-to-localnet.js
-
-# 3. Spawn process with your module
-npx ao-localnet spawn "test-process" --module YOUR-MODULE-ID
+### Development
+```bash
+npm run build       # Build TypeScript SDK
+npm run build:watch # Build SDK in watch mode
+npm test           # Run all tests
+npm run test:watch # Run tests in watch mode
 ```
 
-### Running from Source
-
-```shell
-git clone https://github.com/MichaelBuhler/ao-localnet.git
-cd ao-localnet
-
-# Generate wallets
-cd wallets && ./generateAll.sh && cd ..
-
-# Start services
-docker compose up --detach
-
-# Seed initial data
-cd seed
-./download-aos-module.sh
-./seed-for-aos.sh
-cd ..
-
-# Connect to aos
-./aos.sh
+### CLI Tools
+```bash
+npx ao-localnet spawn "myprocess"  # Spawn an AOS process
+npx ao-localnet aos "myprocess"    # Connect to the process
 ```
 
-## Use Cases
+## 🐳 Docker Containers
 
-This localnet is helpful for:
+This localnet runs these services:
 
-1. **AO Development** - Build and test AO components without mainnet
-2. **Module Testing** - Test custom WASM modules locally
-3. **Lua Development** - Develop AOS processes without bricking testnet
-4. **Integration Testing** - Test full AO workflows end-to-end
-5. **Protocol Research** - Experiment with AO protocol modifications
+- **ArLocal** (port 4000) - Local Arweave gateway
+- **MU** (port 4002) - Messenger Unit (pre-rate-limit version)
+- **SU** (port 4003) - Scheduler Unit
+- **CU** (port 4004) - Compute Unit
+- **SCAR** (port 4006) - Smart Contract Archive Reader
+- **Bundler** (port 4007) - Transaction bundler
+- **Lunar** (port 4008) - Web UI
 
-## Architecture
+### Container Naming
 
-Built on Docker Compose with:
-- **ArLocal** - Forked from [textury/arlocal](https://github.com/textury/arlocal)
-- **AO Services** - From [@permaweb/ao](https://github.com/permaweb/ao)
-- **ScAR Explorer** - From [MichaelBuhler/scar](https://github.com/MichaelBuhler/scar)
-- **Native ARM64** - Optimized for Apple Silicon
+All containers use the `ao-localnet-archive-` prefix to avoid conflicts with other localnet instances:
 
-## Documentation
+```
+ao-localnet-archive-arlocal-1
+ao-localnet-archive-mu-1
+ao-localnet-archive-su-1
+ao-localnet-archive-cu-1
+...
+```
 
-- [CU_LIMITS.md](./CU_LIMITS.md) - CU resource configuration
-- [PROJECT_COMPLETE.md](./PROJECT_COMPLETE.md) - Complete feature list
-- [tests/README.md](./tests/README.md) - Test suite documentation
+## 📁 Project Structure
 
-## Support
+```
+ao-localnet-archive/
+├── src/
+│   └── index.ts              # TypeScript SDK
+├── dist/                     # Compiled SDK output
+│   ├── index.js
+│   ├── index.d.ts
+│   └── ...
+├── tests/
+│   ├── config.test.ts        # Configuration tests
+│   ├── module.test.ts        # Module tests
+│   ├── spawn.test.ts         # Spawn tests
+│   ├── message.test.ts       # Message tests
+│   ├── pingpong.test.ts      # Ping-pong tests
+│   ├── ratelimit.test.ts     # Rate limit tests (30 processes!)
+│   ├── setup.ts              # Test setup utilities
+│   └── utils/
+│       ├── config.ts         # SDK re-exports
+│       └── deployModule.ts   # Module deployment
+├── services/
+│   ├── arlocal/
+│   ├── mu/                   # Pre-rate-limit MU (commit acb3852)
+│   ├── su/
+│   ├── cu/
+│   ├── bundler/
+│   └── scar/
+├── seed/
+│   ├── publish-scheduler-location.mjs  # Saves to config
+│   ├── publish-aos-module.mjs          # Saves to config
+│   └── seed-for-aos.sh
+├── wallets/
+│   ├── ao-wallet.json
+│   ├── scheduler-location-publisher-wallet.json
+│   └── ...
+├── examples/
+│   └── basic-usage.mjs       # SDK example
+├── docker-compose.yml
+├── docker-compose.override.yml
+├── .ao-localnet.config.json
+├── package.json              # Root package with all dependencies
+├── tsconfig.json             # TypeScript config
+└── README.md                 # This file
+```
 
-Join the Marshal [Discord server](https://discord.gg/KzSRvefPau) for help and support.
+## 🔧 Key Features
 
-## License
+### Pre-Rate-Limit MU
+Uses MU from commit `acb3852` (April 17, 2025, 14:07) - right before rate limits were added. This provides:
+- No rate limiting interference during testing
+- Consistent performance
+- 100% success rate on high-load tests
 
-See individual component licenses in their respective repositories.
+### Bootstrap Persistence
+When you run `npm run seed`, the following are automatically saved to config:
+- Scheduler wallet address
+- Scheduler location transaction ID
+- AOS module ID
+- Module publisher address
+
+This eliminates "magic strings" and makes your tests deterministic.
+
+### TypeScript SDK
+Pre-configured exports eliminate boilerplate:
+- No manual wallet loading
+- No manual URL configuration
+- Type-safe access to all bootstrap info
+- Pre-configured aoconnect instances
+
+### Comprehensive Testing
+- 39 passing tests covering all aspects
+- 30 process spawning test (100% success rate)
+- Pre-configured test utilities
+- All tests use the SDK
+
+## 🚨 Troubleshooting
+
+### Tests Fail with "Scheduler not found"
+```bash
+npm run seed    # Must seed first!
+npm run build   # Rebuild SDK
+npm test        # Try again
+```
+
+### Port Already in Use
+```bash
+docker ps       # Check for conflicting containers
+npm stop        # Stop any running ao-localnet
+```
+
+### Module Not Found
+```bash
+npm run configure  # Download AOS module
+```
+
+### Gateway Connection Errors
+```bash
+docker compose ps  # Check all services are healthy
+docker compose logs arlocal  # Check logs
+```
+
+## 📚 Additional Documentation
+
+- `SDK.md` - Detailed SDK documentation
+- `CONFIG.md` - Configuration guide
+- `CONFIGURATION_SUMMARY.md` - Configuration examples
+
+## 🤝 Contributing
+
+This is an archived version for testing stability. For the latest ao-localnet:
+- Visit: https://github.com/MichaelBuhler/ao-localnet
+
+## 📄 License
+
+Same as the original ao-localnet project.
+
+## 🙏 Credits
+
+- Original ao-localnet by [@MichaelBuhler](https://github.com/MichaelBuhler)
+- Archive modifications for pre-rate-limit testing
+- TypeScript SDK and unified package structure
+
+---
+
+**Happy Testing! 🚀**

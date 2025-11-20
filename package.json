@@ -1,7 +1,17 @@
 {
   "name": "ao-localnet",
+  "version": "1.0.0",
+  "type": "module",
   "bin": {
     "ao-localnet": "cli.sh"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "aos": "./aos.sh",
@@ -16,17 +26,27 @@
     "start": "npm run config:apply && docker compose up --detach",
     "stop": "docker compose down",
     "spawn": "./spawn.sh",
-    "test": "cd tests && npm install && npm test",
-    "test:watch": "cd tests && npm run test:watch",
-    "test:module": "cd tests && npm install && npm run test:module",
-    "test:spawn": "cd tests && npm install && npm run test:spawn",
-    "test:message": "cd tests && npm install && npm run test:message",
-    "test:pingpong": "cd tests && npm install && npm run test:pingpong",
-    "test:config": "cd tests && npm install && npm run test:config",
-    "test:ratelimit": "cd tests && npm install && npm run test:ratelimit"
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "tsx --test tests/*.test.ts",
+    "test:watch": "tsx --test --watch tests/*.test.ts",
+    "test:spawn": "tsx --test tests/spawn.test.ts",
+    "test:module": "tsx --test tests/module.test.ts",
+    "test:message": "tsx --test tests/message.test.ts",
+    "test:pingpong": "tsx --test tests/pingpong.test.ts",
+    "test:config": "tsx --test tests/config.test.ts",
+    "test:ratelimit": "tsx --test tests/ratelimit.test.ts"
   },
   "dependencies": {
+    "@permaweb/aoconnect": "^0.0.59",
     "@permaweb/aos": "https://get_ao.g8way.io",
-    "arweave": "^1.15.7"
+    "@types/dockerode": "^3.3.47",
+    "arweave": "^1.15.7",
+    "dockerode": "^4.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.2"
   }
 }
