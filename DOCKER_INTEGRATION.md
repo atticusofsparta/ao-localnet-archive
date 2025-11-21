@@ -341,7 +341,7 @@ Run the Docker management example:
 
 ```bash
 # Build the SDK
-npm run build
+pnpm run build
 
 # Run Docker management example
 node examples/docker-management.mjs

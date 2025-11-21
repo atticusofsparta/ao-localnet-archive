@@ -59,14 +59,14 @@ A comprehensive SDK that exports:
 ### 1. Start & Seed the Localnet
 
 ```bash
-npm start    # Start all services
-npm run seed # Seed with scheduler and module
+pnpm start    # Start all services
+pnpm run seed # Seed with scheduler and module
 ```
 
 ### 2. Build the SDK
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### 3. Use in Your Code
@@ -104,7 +104,7 @@ const messageId = await ao.message({
 
 ## 📦 What Gets Stored in Config
 
-After running `npm run seed`, your `.ao-localnet.config.json` will have:
+After running `pnpm run seed`, your `.ao-localnet.config.json` will have:
 
 ```json
 {
@@ -338,22 +338,22 @@ ao-localnet-archive/
 ### Always Seed First
 The SDK requires a seeded localnet:
 ```bash
-npm start
-npm run seed  # ← Must run this!
-npm run build # ← Then build SDK
+pnpm start
+pnpm run seed  # ← Must run this!
+pnpm run build # ← Then build SDK
 ```
 
 ### Errors if Not Seeded
 The SDK will throw clear errors if bootstrap info is missing:
 ```
-Error: Scheduler not found in config. Please run: npm run seed
+Error: Scheduler not found in config. Please run: pnpm run seed
 ```
 
 ### Reseed After Reset
 If you reset the network:
 ```bash
-npm run reseed  # Reset + seed in one command
-npm run build   # Rebuild SDK
+pnpm run reseed  # Reset + seed in one command
+pnpm run build   # Rebuild SDK
 ```
 
 ## 🎯 Summary

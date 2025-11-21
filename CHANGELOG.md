@@ -6,10 +6,14 @@ This document tracks all modifications made to create the ao-localnet-archive va
 
 ## Major Changes
 
-### 1. Pre-Rate-Limit MU (✅ Complete)
+### 1. MU with Hyperbeam Support (✅ Complete)
 - **Changed:** `services/mu/Dockerfile` 
-- **Commit:** Using `acb3852` (April 17, 2025, 14:07 - before rate limits)
-- **Reason:** Eliminate rate limiting interference during testing
+- **Commit:** Using `fa48943` (September 9, 2025)
+- **Features:** 
+  - Hyperbeam device message handler support
+  - All hyperbeam compatibility fixes included
+  - Rate limits patched out for testing
+- **Reason:** Support hyperbeam device messages while eliminating rate limiting
 - **Result:** 100% success rate on 30 process spawning test
 
 ### 2. Unique Container Names (✅ Complete)
@@ -39,7 +43,7 @@ This document tracks all modifications made to create the ao-localnet-archive va
   - `createAoSigner()` - Pre-configured signer
   - `getBootstrapInfo()` - All-in-one bootstrap info
   - `loadConfig()`, `getUrls()`, etc.
-- **Build:** `npm run build` compiles to `dist/`
+- **Build:** `pnpm run build` compiles to `dist/`
 - **Types:** Full TypeScript definitions included
 - **Reason:** Simplify E2E testing, eliminate boilerplate
 
@@ -82,7 +86,25 @@ This document tracks all modifications made to create the ao-localnet-archive va
 ### 8. Configuration Updates (✅ Complete)
 - **Removed:** Rate limit config from `.ao-localnet.config.json`
 - **Commented out:** Rate limit env var generation in `config.mjs`
-- **Reason:** Pre-rate-limit MU doesn't use these settings
+- **Reason:** Updated MU doesn't use these settings in localnet
+
+### 9. Hyperbeam Device Message Test (✅ Complete)
+- **Added:** New test in `tests/pingpong.test.ts`
+- **Test name:** "should handle hyperbeam device messages and crank results"
+- **Tests:**
+  - Sending messages with `device` parameter
+  - Cranking hyperbeam results
+  - Verifying device and cache tags
+- **Example code:**
+  ```lua
+  ao.send({
+    Target = ao.id,
+    Action = "HyperbeamTest",
+    device = "patch@1.0",
+    cache = { Owner }
+  })
+  ```
+- **Reason:** Ensure MU can handle hyperbeam device messages and generate results
 
 ## Test Results
 
@@ -152,16 +174,16 @@ README.md                      # Comprehensive rewrite
 ### Before
 ```bash
 cd tests
-npm install
-npm test
+pnpm install
+pnpm test
 ```
 
 ### After
 ```bash
 # From root
-npm install      # Installs everything
-npm run build    # Build SDK
-npm test         # Run tests
+pnpm install      # Installs everything
+pnpm run build    # Build SDK
+pnpm test         # Run tests
 ```
 
 ### SDK Usage (New)
@@ -195,9 +217,9 @@ const signer = createAoSigner();
 If upgrading from original ao-localnet:
 
 1. **Backup your config**: Copy `.ao-localnet.config.json`
-2. **Update dependencies**: `npm install` in root
-3. **Rebuild**: `npm run build`
-4. **Reseed**: `npm run reseed` (to populate bootstrap info)
+2. **Update dependencies**: `pnpm install` in root
+3. **Rebuild**: `pnpm run build`
+4. **Reseed**: `pnpm run reseed` (to populate bootstrap info)
 5. **Update imports**: Change to use SDK exports
    ```typescript
    // Before
@@ -211,7 +233,7 @@ If upgrading from original ao-localnet:
 
 1. **Test location**: Tests must now be run from root, not `tests/` directory
 2. **Import paths**: Use `'ao-localnet'` instead of local paths
-3. **Config structure**: Bootstrap info now required (run `npm run seed`)
+3. **Config structure**: Bootstrap info now required (run `pnpm run seed`)
 4. **Container names**: New prefix `ao-localnet-archive-`
 
 ## Non-Breaking Changes

@@ -25,19 +25,41 @@ git clone <this-repo>
 cd ao-localnet-archive
 
 # Install dependencies
-npm install
+pnpm install
 
 # Configure and start
-npm run configure     # Generate wallets and download AOS module
-npm start            # Start Docker containers
-npm run seed         # Seed localnet (saves bootstrap info to config)
+pnpm run configure     # Generate wallets and download AOS module
+pnpm start            # Start Docker containers
+pnpm run seed         # Seed localnet (saves bootstrap info to config)
 
 # Build the SDK
-npm run build        # Compile TypeScript SDK
+pnpm run build        # Compile TypeScript SDK
 
 # Run tests
-npm test            # Run all tests
+pnpm test            # Run all tests
 ```
+
+### 🔗 Using with pnpm link (Development)
+
+This package is globally linked for local development! You can use it in other projects:
+
+```bash
+# In your other project
+cd /path/to/your/project
+pnpm link ao-localnet
+
+# Now import from 'ao-localnet' in your code
+import { getAoInstance, waitForAllServices } from 'ao-localnet';
+```
+
+**Changes to `ao-localnet-archive` are immediately available** in linked projects after rebuilding:
+
+```bash
+cd /Volumes/primary_all/ao-localnet-archive
+pnpm run build        # Rebuild and changes are live!
+```
+
+See [PNPM_LINK_GUIDE.md](./PNPM_LINK_GUIDE.md) for detailed instructions.
 
 ## 📦 TypeScript SDK
 
@@ -181,18 +203,18 @@ describe('My AO Tests', () => {
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run specific test suites
-npm run test:spawn      # Spawn process tests
-npm run test:module     # Module deployment tests
-npm run test:message    # Message sending tests
-npm run test:pingpong   # Ping-pong cranking tests
-npm run test:config     # Configuration tests
-npm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
+pnpm run test:spawn      # Spawn process tests
+pnpm run test:module     # Module deployment tests
+pnpm run test:message    # Message sending tests
+pnpm run test:pingpong   # Ping-pong cranking tests
+pnpm run test:config     # Configuration tests
+pnpm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
 
 # Watch mode
-npm run test:watch
+pnpm run test:watch
 ```
 
 ### Test Suites
@@ -209,9 +231,9 @@ npm run test:watch
 Before running tests:
 
 ```bash
-npm start       # Start all services
-npm run seed    # Seed network (REQUIRED!)
-npm run build   # Build TypeScript SDK
+pnpm start       # Start all services
+pnpm run seed    # Seed network (REQUIRED!)
+pnpm run build   # Build TypeScript SDK
 ```
 
 ## ⚙️ Configuration
@@ -219,7 +241,7 @@ npm run build   # Build TypeScript SDK
 Create `.ao-localnet.config.json` for custom settings:
 
 ```shell
-npm run init          # Create config file
+pnpm run init          # Create config file
 ```
 
 ### Configuration Options
@@ -259,26 +281,26 @@ npm run init          # Create config file
 }
 ```
 
-**Note:** The `bootstrap` section is automatically populated when you run `npm run seed`.
+**Note:** The `bootstrap` section is automatically populated when you run `pnpm run seed`.
 
 ## 📋 Available Commands
 
 ### Setup & Management
 ```bash
-npm run configure    # Generate wallets and download AOS module
-npm start           # Start all Docker containers
-npm stop            # Stop containers (preserves data)
-npm run seed        # Seed network and save bootstrap info
-npm run reseed      # Reset and re-seed
-npm run reset       # Delete all data
+pnpm run configure    # Generate wallets and download AOS module
+pnpm start           # Start all Docker containers
+pnpm stop            # Stop containers (preserves data)
+pnpm run seed        # Seed network and save bootstrap info
+pnpm run reseed      # Reset and re-seed
+pnpm run reset       # Delete all data
 ```
 
 ### Development
 ```bash
-npm run build       # Build TypeScript SDK
-npm run build:watch # Build SDK in watch mode
-npm test           # Run all tests
-npm run test:watch # Run tests in watch mode
+pnpm run build       # Build TypeScript SDK
+pnpm run build:watch # Build SDK in watch mode
+pnpm test           # Run all tests
+pnpm run test:watch # Run tests in watch mode
 ```
 
 ### CLI Tools
@@ -366,7 +388,7 @@ Uses MU from commit `acb3852` (April 17, 2025, 14:07) - right before rate limits
 - 100% success rate on high-load tests
 
 ### Bootstrap Persistence
-When you run `npm run seed`, the following are automatically saved to config:
+When you run `pnpm run seed`, the following are automatically saved to config:
 - Scheduler wallet address
 - Scheduler location transaction ID
 - AOS module ID
@@ -391,20 +413,20 @@ Pre-configured exports eliminate boilerplate:
 
 ### Tests Fail with "Scheduler not found"
 ```bash
-npm run seed    # Must seed first!
-npm run build   # Rebuild SDK
-npm test        # Try again
+pnpm run seed    # Must seed first!
+pnpm run build   # Rebuild SDK
+pnpm test        # Try again
 ```
 
 ### Port Already in Use
 ```bash
 docker ps       # Check for conflicting containers
-npm stop        # Stop any running ao-localnet
+pnpm stop        # Stop any running ao-localnet
 ```
 
 ### Module Not Found
 ```bash
-npm run configure  # Download AOS module
+pnpm run configure  # Download AOS module
 ```
 
 ### Gateway Connection Errors

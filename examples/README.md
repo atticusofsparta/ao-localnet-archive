@@ -10,7 +10,7 @@ This directory contains working examples demonstrating the AO Localnet SDK featu
 
 **Run:**
 ```bash
-npm run build
+pnpm run build
 node examples/basic-usage.mjs
 ```
 
@@ -29,7 +29,7 @@ node examples/basic-usage.mjs
 
 **Run:**
 ```bash
-npm run build
+pnpm run build
 node examples/docker-management.mjs
 ```
 
@@ -61,7 +61,7 @@ node examples/docker-management.mjs
 
 **Run:**
 ```bash
-npm run build
+pnpm run build
 node --test examples/e2e-with-docker.test.mjs
 ```
 
@@ -91,17 +91,17 @@ node --test examples/e2e-with-docker.test.mjs
 
 1. Start the localnet:
    ```bash
-   npm start
+   pnpm start
    ```
 
 2. Seed the network:
    ```bash
-   npm run seed
+   pnpm run seed
    ```
 
 3. Build the SDK:
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 ### Run All Examples
@@ -143,5 +143,5 @@ After running these examples:
 
 ---
 
-**Tip:** All examples work with the compiled SDK in `dist/`. Make sure to run `npm run build` after any changes to the SDK source code.
+**Tip:** All examples work with the compiled SDK in `dist/`. Make sure to run `pnpm run build` after any changes to the SDK source code.
 
