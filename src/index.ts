@@ -184,6 +184,37 @@ export function createAoSigner(): ReturnType<typeof createDataItemSigner> {
 }
 
 /**
+ * Get the bundler wallet
+ */
+export function getBundlerWallet() {
+  const config = loadConfig();
+  const walletPath = config.wallets?.bundlerWallet || './wallets/bundler-wallet.json';
+  return loadWallet(walletPath);
+}
+
+/**
+ * Get bundler wallet address
+ */
+export async function getBundlerAddress(): Promise<string> {
+  const config = loadConfig();
+  const arweave = Arweave.init({});
+  
+  const walletPath = config.wallets?.bundlerWallet || './wallets/bundler-wallet.json';
+  const fullPath = resolve(__dirname, '..', walletPath);
+  const wallet = JSON.parse(readFileSync(fullPath, 'utf8'));
+  
+  return await arweave.wallets.jwkToAddress(wallet);
+}
+
+/**
+ * Create a data item signer for the bundler wallet
+ */
+export function createBundlerSigner(): ReturnType<typeof createDataItemSigner> {
+  const wallet = getBundlerWallet();
+  return createDataItemSigner(wallet);
+}
+
+/**
  * Get a pre-configured aoconnect instance
  */
 export function getAoInstance(): ReturnType<typeof connect> {
@@ -201,12 +232,14 @@ export function getAoInstance(): ReturnType<typeof connect> {
 export async function getBootstrapInfo() {
   const config = loadConfig();
   const authority = await getAuthority();
+  const bundlerAddress = await getBundlerAddress();
   
   return {
     scheduler: getScheduler(),
     schedulerLocation: getSchedulerLocation(),
     aosModule: getAosModule(),
     authority,
+    bundlerAddress,
     urls: getUrls(),
     config,
   };
@@ -226,6 +259,9 @@ export default {
   loadWallet,
   getAoWallet,
   createAoSigner,
+  getBundlerWallet,
+  getBundlerAddress,
+  createBundlerSigner,
   getAoInstance,
   getBootstrapInfo,
 };

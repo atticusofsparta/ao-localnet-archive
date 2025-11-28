@@ -35,7 +35,10 @@
     "test:message": "tsx --test tests/message.test.ts",
     "test:pingpong": "tsx --test tests/pingpong.test.ts",
     "test:config": "tsx --test tests/config.test.ts",
-    "test:ratelimit": "tsx --test tests/ratelimit.test.ts"
+    "test:ratelimit": "tsx --test tests/ratelimit.test.ts",
+    "test:proxy": "tsx --test tests/proxy.test.ts",
+    "test:proxy:shell": "services/arlocal-proxy/test-proxy.sh",
+    "logs:proxy": "docker compose logs arlocal-proxy -f"
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.59",

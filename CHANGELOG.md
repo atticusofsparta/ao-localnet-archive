@@ -6,7 +6,34 @@ This document tracks all modifications made to create the ao-localnet-archive va
 
 ## Major Changes
 
-### 1. MU with Hyperbeam Support (✅ Complete)
+### 1. Arlocal Auto-Mining Proxy (✅ Complete)
+- **Added:** `services/arlocal-proxy/`
+  - `server.mjs` - Express proxy server with auto-mining
+  - `package.json` - Dependencies (express, http-proxy-middleware)
+  - `Dockerfile` - Node.js Alpine container
+  - `README.md` - Service documentation
+  - `test-proxy.sh` - Test script
+- **Changed:** 
+  - `docker-compose.yml` - Added arlocal-proxy service, updated dependencies
+  - `docker-compose.override.yml` - Proxy exposed on port 4000 instead of arlocal
+  - Services now connect to `arlocal-proxy:80` instead of `arlocal:80`
+- **Documentation:**
+  - `ARLOCAL_PROXY.md` - Complete proxy architecture and usage guide
+  - `MIGRATION_AUTO_MINING.md` - Upgrade guide for existing users
+  - Updated `README.md` - Added proxy information to services section
+- **Scripts:**
+  - `pnpm run test:proxy` - Test proxy auto-mining
+  - `pnpm run logs:proxy` - Watch proxy logs
+- **Features:**
+  - Transparent HTTP proxy to arlocal
+  - Automatic mining after POST/PUT transactions
+  - Race condition prevention with queuing
+  - Non-blocking background mining
+  - Comprehensive logging with debug module
+- **Reason:** Eliminate manual mining during development, improve developer experience
+- **Result:** Transactions automatically mined, no manual `/mine` calls needed
+
+### 2. MU with Hyperbeam Support (✅ Complete)
 - **Changed:** `services/mu/Dockerfile` 
 - **Commit:** Using `fa48943` (September 9, 2025)
 - **Features:** 

@@ -27,10 +27,25 @@ services:
       test: wget --spider http://localhost/info || exit 1
       start_period: 10s
       start_interval: 1s
-    ports:
-      - 4000:80
+    # No external ports - only accessible via arlocal-proxy
     volumes:
       - ./services/arlocal/data:/app/db
+
+  arlocal-proxy:
+    depends_on:
+      arlocal:
+        condition: service_healthy
+    build: ./services/arlocal-proxy
+    environment:
+      - ARLOCAL_URL=http://arlocal:80
+      - PORT=80
+      - DEBUG=arlocal-proxy*
+    healthcheck:
+      test: wget --spider http://localhost/info || exit 1
+      start_period: 10s
+      start_interval: 1s
+    ports:
+      - 4000:80
 
   mu:
     build: ./services/mu
@@ -44,7 +59,7 @@ services:
   su:
     platform: linux/arm64 # Native Apple Silicon support
     depends_on:
-      arlocal:
+      arlocal-proxy:
         condition: service_healthy
       su-database:
         condition: service_healthy
@@ -103,26 +118,28 @@ services:
 
   scar:
     depends_on:
-      arlocal:
+      arlocal-proxy:
         condition: service_healthy
     build:
       context: ./services/scar
       args:
         - REPO=https://github.com/MichaelBuhler/scar.git
         - BRANCH=main
-        - ARWEAVE_GATEWAY_URL=${GATEWAY_URL:-http://localhost:4000}
+        - ARWEAVE_GATEWAY_URL=http://arlocal-proxy:80
     ports:
       - 4006:80
 
   bundler:
     depends_on:
-      arlocal:
+      arlocal-proxy:
         condition: service_healthy
     build: ./services/bundler
     configs:
       - source: bundler-wallet
         target: /app/bundler-wallet.json
     env_file: ./services/bundler/.env
+    environment:
+      - GATEWAY_URL=http://arlocal-proxy:80
     ports:
       - 4007:80
 
@@ -138,7 +155,7 @@ services:
         RUN echo "</body></html>" >> public/tmp.html
         RUN mv public/tmp.html public/index.html
         RUN sed -i "s|getTxEndpoint(|'https://arweave.net/'+(|" src/helpers/config.ts
-        RUN sed -i "s|https://arweave\.net|${GATEWAY_URL:-http://localhost:4000}|" src/helpers/endpoints.ts
+        RUN sed -i "s|https://arweave\.net|${GATEWAY_URL:-http://arlocal-proxy:80}|" src/helpers/endpoints.ts
         RUN sed -i "s|https://cu\.ao-testnet\.xyz|${CU_URL:-http://localhost:4004}|" src/components/molecules/ProcessRead/ProcessRead.tsx
         RUN sed -i "s|MODE: 'legacy'|MODE: 'legacy', GATEWAY_URL: '${GATEWAY_URL:-http://localhost:4000}', GRAPHQL_URL: '${GRAPHQL_URL:-http://localhost:4000/graphql}', CU_URL: '${CU_URL:-http://localhost:4004}', MU_URL: '${MU_URL:-http://localhost:4002}'|" src/providers/PermawebProvider.tsx
         RUN sed -i "s|AO Legacynet|${CLIENT:-Marshal} Cloudnet|" src/views/Landing/index.tsx

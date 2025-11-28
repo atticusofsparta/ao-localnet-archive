@@ -32,7 +32,11 @@
       "persist": true
     },
     "mu": {
-      "enabled": true
+      "enabled": true,
+      "rateLimit": {
+        "maxRequests": 50000,
+        "intervalMs": 3600000
+      }
     },
     "su": {
       "enabled": true,
@@ -79,16 +83,13 @@
   "bootstrap": {
     "transactions": {
       "scheduler": "s2yVCqphh0smC01A0feRoL_nMvcIS0bnhW6itEIengc",
-      "testWalletMint": [
-        "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
-      ],
-      "schedulerLocation": "85-bT6yJPDx-3slkBpTBgP3gY8T6rfIpFyLZQy51pXs",
-      "aosModule": "gL3PClajQ3Wv5EXTVdWniGU5RjPQqYJDpAs-PZMuWEY",
+      "module": "1m5v5Inwv37qDIkEmtnkYfWil58Yf3nwsMDxvzRchDk",
+      "testWalletMint": [],
+      "schedulerLocation": "HzS9DhPmU32LhDpKVE2bcBqVSBp1Sl42vHu21RRiNds",
+      "aosModule": "kjDr3E2nMmZ5EEBEQyfO-MAY6D2wczc6wswyg-y26Sg",
       "aosModulePublisher": "_xRBR7Y32SO7v8fHImuh3CpvRcYEvBLPvcLGerBO2t4"
     },
-    "wallets": {
-      "testWallet": "y0yFQVYWtQblOKClbuBmo6rqxCiKD1KHOt_Aizgm8w8"
-    },
-    "lastBootstrap": "2025-11-20T16:21:28.976Z"
+    "wallets": {},
+    "lastBootstrap": "2025-11-28T17:16:53.773Z"
   }
 }

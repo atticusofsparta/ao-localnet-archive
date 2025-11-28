@@ -1,0 +1,16 @@
+{
+  "name": "arlocal-proxy",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Proxy for arlocal that auto-mines transactions",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "debug": "^4.3.4"
+  }
+}
+

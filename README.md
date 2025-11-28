@@ -212,6 +212,7 @@ pnpm run test:message    # Message sending tests
 pnpm run test:pingpong   # Ping-pong cranking tests
 pnpm run test:config     # Configuration tests
 pnpm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
+pnpm run test:proxy      # Arlocal-proxy auto-mining tests (14 tests)
 
 # Watch mode
 pnpm run test:watch
@@ -225,6 +226,7 @@ pnpm run test:watch
 4. **Message Tests** - Message sending and result reading
 5. **Ping-Pong Tests** - Inter-process communication and cranking
 6. **Rate Limit Tests** - Load testing with 100 messages and **30 process spawning**
+7. **Proxy Tests** - Arlocal-proxy auto-mining verification (14 comprehensive tests)
 
 ### Prerequisites for Tests
 
@@ -313,13 +315,26 @@ npx ao-localnet aos "myprocess"    # Connect to the process
 
 This localnet runs these services:
 
-- **ArLocal** (port 4000) - Local Arweave gateway
+- **ArLocal Proxy** (port 4000) - Transparent proxy with auto-mining ⚡
+- **ArLocal** (internal only) - Local Arweave gateway
 - **MU** (port 4002) - Messenger Unit (pre-rate-limit version)
 - **SU** (port 4003) - Scheduler Unit
 - **CU** (port 4004) - Compute Unit
 - **SCAR** (port 4006) - Smart Contract Archive Reader
 - **Bundler** (port 4007) - Transaction bundler
 - **Lunar** (port 4008) - Web UI
+
+### ⚡ Auto-Mining Proxy
+
+The **arlocal-proxy** automatically mines blocks after transactions are posted, eliminating manual mining during development:
+
+- ✅ Transparent - forwards all requests to arlocal
+- ✅ Smart - detects transaction submissions (POST/PUT)
+- ✅ Automatic - mines after successful transactions
+- ✅ Non-blocking - mining happens in background
+- ✅ Race-safe - queues concurrent mine requests
+
+See [ARLOCAL_PROXY.md](./ARLOCAL_PROXY.md) for detailed documentation.
 
 ### Container Naming
 
