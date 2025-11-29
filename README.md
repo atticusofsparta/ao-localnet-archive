@@ -3,7 +3,7 @@
 A complete, self-contained AO localnet environment with pre-rate-limit MU, TypeScript SDK, and comprehensive testing suite.
 
 > [!NOTE]
-> **This is an archived version of ao-localnet** using pre-rate-limit MU (commit `acb3852`) for optimal testing performance.
+> **This is an archived version of ao-localnet** using MU commit `fa48943` (September 9, 2025) with comprehensive rate limit patches for optimal testing performance.
 >
 > Join the Marshal [Discord server](https://discord.gg/KzSRvefPau) for help and support.
 
@@ -11,7 +11,7 @@ A complete, self-contained AO localnet environment with pre-rate-limit MU, TypeS
 
 This archive includes:
 
-- **Pre-rate-limit MU** - Uses MU from before rate limiting was added (April 17, 2025)
+- **MU with Hyperbeam + No Rate Limits** - Uses MU `fa48943` with comprehensive rate limit patches
 - **TypeScript SDK** - Pre-configured exports for scheduler, module IDs, and aoconnect
 - **Unified package** - All tests and dependencies at root level
 - **Bootstrap persistence** - Seed scripts save all IDs to config
@@ -247,7 +247,12 @@ pnpm run test:module     # Module deployment tests
 pnpm run test:message    # Message sending tests
 pnpm run test:pingpong   # Ping-pong cranking tests
 pnpm run test:config     # Configuration tests
-pnpm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
+pnpm run test:ratelimit      # Rate limit tests (includes 30 process spawning)
+pnpm run test:rate-limit-fix # Verify rate limits are completely disabled
+
+# E2E tests (test as a dependency in consumer project)
+pnpm run test:e2e            # Full E2E test suite
+pnpm run test:e2e:setup      # Setup E2E test environment
 pnpm run test:proxy      # Arlocal-proxy auto-mining tests (14 tests)
 pnpm run test:client     # Docker client integration tests (15 tests, spawns 100 processes)
 
@@ -271,6 +276,15 @@ pnpm run test:watch
    - **High-load: spawns 100 processes in 1.6 seconds!**
    - Message passing between processes
    - Performance metrics
+9. **E2E Tests** - End-to-end testing as a dependency (24 tests):
+   - Package installation and imports
+   - SDK functionality in consumer projects
+   - LocalnetClient service management
+   - Auto-seeding verification
+   - Rate limit testing (25 rapid messages, 5 parallel spawns)
+   - Simulates real implementation environment
+
+See [e2e-test/README.md](./e2e-test/README.md) for detailed E2E test documentation.
 
 ### Prerequisites for Tests
 
@@ -440,9 +454,13 @@ ao-localnet-archive/
 
 ## 🔧 Key Features
 
-### Pre-Rate-Limit MU
-Uses MU from commit `acb3852` (April 17, 2025, 14:07) - right before rate limits were added. This provides:
-- No rate limiting interference during testing
+### MU with Comprehensive Rate Limit Patches
+Uses MU from commit `fa48943` (September 9, 2025) with comprehensive patches that:
+- Remove all rate limit configuration and middleware
+- Stub out rate limit validation functions
+- Set unlimited rate limit environment variables
+- Support hyperbeam device message handlers
+- Provide optimal testing performance with zero rate limiting interference
 - Consistent performance
 - 100% success rate on high-load tests
 

@@ -7,10 +7,23 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "wallets",
+    "seed",
+    "docker-compose.yml",
+    "docker-compose.override.yml",
+    ".ao-localnet.config.json",
+    "services"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
     }
   },
   "scripts": {
@@ -40,6 +53,9 @@
     "test:proxy:shell": "services/arlocal-proxy/test-proxy.sh",
     "test:client": "tsx --test tests/client.test.ts",
     "test:restart": "tsx --test tests/restart.test.ts",
+    "test:rate-limit-fix": "node tests/test-rate-limit-fix.mjs",
+    "test:e2e": "cd e2e-test && pnpm run setup && pnpm test",
+    "test:e2e:setup": "cd e2e-test && pnpm run setup",
     "logs:proxy": "docker compose logs arlocal-proxy -f"
   },
   "dependencies": {

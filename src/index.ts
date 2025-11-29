@@ -5,7 +5,7 @@
  * including module IDs, scheduler information, and aoconnect instances.
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, realpathSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { connect, createDataItemSigner } from '@permaweb/aoconnect';
@@ -270,8 +270,37 @@ export async function getAuthority(): Promise<string> {
  * Load a wallet from file
  */
 export function loadWallet(walletPath: string) {
-  const fullPath = resolve(__dirname, '..', walletPath);
-  return JSON.parse(readFileSync(fullPath, 'utf8'));
+  // Try multiple locations to support both development and installed package usage
+  const locations = [
+    // 1. Relative to current working directory (when running from source)
+    resolve(process.cwd(), walletPath),
+    // 2. Relative to package root (when installed as dependency)
+    resolve(__dirname, '..', walletPath),
+  ];
+  
+  // 3. Try resolving symlinks for pnpm file: protocol installs
+  try {
+    const realPath = realpathSync(resolve(__dirname, '..'));
+    locations.push(resolve(realPath, walletPath));
+  } catch {
+    // Ignore if realpath fails
+  }
+  
+  for (const fullPath of locations) {
+    try {
+      return JSON.parse(readFileSync(fullPath, 'utf8'));
+    } catch (error) {
+      // Try next location
+      continue;
+    }
+  }
+  
+  // If all locations fail, throw with helpful error
+  throw new Error(
+    `Wallet not found at: ${walletPath}\n` +
+    `Tried locations:\n${locations.map(p => `  - ${p}`).join('\n')}\n` +
+    `Make sure wallets are generated with: pnpm run configure`
+  );
 }
 
 /**

@@ -1,0 +1,19 @@
+# Include wallet files in npm package
+!wallets/*.json
+
+# Exclude test and development files
+e2e-test/
+tests/
+*.test.ts
+*.test.mjs
+*.test.js
+
+# Exclude development configs
+.cursor/
+.vscode/
+terminals/
+
+# Exclude build artifacts
+*.log
+.DS_Store
+

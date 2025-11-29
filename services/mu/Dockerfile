@@ -17,13 +17,18 @@ WORKDIR /build
 COPY --from=downloader /download/ao/servers/mu .
 
 # Using version fa48943 (Sep 9, 2025) - has all hyperbeam device message handler fixes
-# Patch to remove rate limiting for localnet testing
+# Comprehensive rate limit removal for localnet testing
 
-# Remove rate limit env vars from config schema
-RUN sed -i '/IP_WALLET_RATE_LIMIT:/d' src/config.js
+# Remove all rate limit configuration
+RUN sed -i '/IP_WALLET_RATE_LIMIT/d' src/config.js 2>/dev/null || true
+RUN sed -i '/WALLET_RATE_LIMIT/d' src/config.js 2>/dev/null || true
+RUN sed -i '/ipWalletRateLimit/d' src/config.js 2>/dev/null || true
 
-# Remove rate limit default values from config
-RUN sed -i '/IP_WALLET_RATE_LIMIT:/d' src/config.js
+# Set environment variables to disable rate limiting
+ENV DEFAULT_RATE_LIMIT={}
+ENV IP_WALLET_RATE_LIMIT=999999999
+ENV IP_WALLET_RATE_LIMIT_INTERVAL=1
+ENV WALLET_RATE_LIMIT_ENABLED=false
 
 RUN npm install --ignore-engines --omit=dev
 

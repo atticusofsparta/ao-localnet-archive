@@ -58,15 +58,24 @@ This document tracks all modifications made to create the ao-localnet-archive va
 - **Reason:** Eliminate manual mining during development, improve developer experience
 - **Result:** Transactions automatically mined, no manual `/mine` calls needed
 
-### 2. MU with Hyperbeam Support (✅ Complete)
-- **Changed:** `services/mu/Dockerfile` 
+### 2. MU with Hyperbeam + Comprehensive Rate Limit Patches (✅ Complete)
+- **Changed:** `services/mu/Dockerfile` and `docker-compose.override.yml`
 - **Commit:** Using `fa48943` (September 9, 2025)
 - **Features:** 
   - Hyperbeam device message handler support
   - All hyperbeam compatibility fixes included
-  - Rate limits patched out for testing
-- **Reason:** Support hyperbeam device messages while eliminating rate limiting
-- **Result:** 100% success rate on 30 process spawning test
+  - **Comprehensive rate limit removal**:
+    - Config schema entries removed via sed
+    - Dockerfile ENV variables set to unlimited
+    - Runtime environment override in docker-compose.override.yml
+    - Multiple rate limit config variations handled
+- **Why override file matters:**
+  - Docker Compose standard pattern for local overrides
+  - Ensures rate limit env vars are set on every start
+  - Provides defense-in-depth (Dockerfile + runtime)
+  - Works reliably with LocalnetClient
+- **Reason:** Support hyperbeam device messages while completely eliminating rate limiting
+- **Result:** 100% success rate on 30 process spawning test, zero rate limit errors
 
 ### 2. Unique Container Names (✅ Complete)
 - **Changed:** `docker-compose.yml` and `config.mjs`
