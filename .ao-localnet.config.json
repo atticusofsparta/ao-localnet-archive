@@ -85,11 +85,11 @@
       "scheduler": "s2yVCqphh0smC01A0feRoL_nMvcIS0bnhW6itEIengc",
       "module": "1m5v5Inwv37qDIkEmtnkYfWil58Yf3nwsMDxvzRchDk",
       "testWalletMint": [],
-      "schedulerLocation": "HzS9DhPmU32LhDpKVE2bcBqVSBp1Sl42vHu21RRiNds",
-      "aosModule": "kjDr3E2nMmZ5EEBEQyfO-MAY6D2wczc6wswyg-y26Sg",
-      "aosModulePublisher": "_xRBR7Y32SO7v8fHImuh3CpvRcYEvBLPvcLGerBO2t4"
+      "aosModulePublisher": "_xRBR7Y32SO7v8fHImuh3CpvRcYEvBLPvcLGerBO2t4",
+      "schedulerLocation": "g7XYNo8dMFymQSzbEiWUx6MGTWpzcZ3nfCU51LBDB58",
+      "aosModule": "2hR02iD8xxrfyubzHyZv4C9Q15ul50ffrlz32ucv4Cg"
     },
     "wallets": {},
-    "lastBootstrap": "2025-11-28T17:16:53.773Z"
+    "lastBootstrap": "2025-11-29T20:59:49.859Z"
   }
 }

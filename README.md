@@ -15,6 +15,8 @@ This archive includes:
 - **TypeScript SDK** - Pre-configured exports for scheduler, module IDs, and aoconnect
 - **Unified package** - All tests and dependencies at root level
 - **Bootstrap persistence** - Seed scripts save all IDs to config
+- **Auto-seeding** - Automatically detects and re-seeds missing scheduler location/module
+- **Auto-mining proxy** - Transactions are automatically mined without manual intervention
 - **30 process test** - Load testing with 100% success rate
 
 ## 🚀 Quick Start
@@ -60,6 +62,37 @@ pnpm run build        # Rebuild and changes are live!
 ```
 
 See [PNPM_LINK_GUIDE.md](./PNPM_LINK_GUIDE.md) for detailed instructions.
+
+## 🌱 Auto-Seeding
+
+The localnet now includes **automatic seeding** that detects and repairs missing bootstrap data:
+
+```typescript
+import { LocalnetClient } from 'ao-localnet';
+
+const client = new LocalnetClient();
+
+// Auto-seeding happens automatically on start
+await client.start({
+  waitForHealthy: true,
+  autoSeed: true,  // default: true
+  onProgress: (msg) => console.log(msg),
+});
+```
+
+**What it does:**
+- Checks if scheduler location transaction exists in arlocal
+- Checks if AOS module transaction exists in arlocal  
+- Automatically re-seeds if either is missing
+- No more "scheduler location not found" errors!
+
+**When it helps:**
+- Fresh starts with no seed data
+- Non-persistent restarts (data cleared)
+- Manual config edits or corruption
+- Service restarts across different sessions
+
+See [AUTO_SEED_IMPLEMENTATION.md](./AUTO_SEED_IMPLEMENTATION.md) for full details.
 
 ## 📦 TypeScript SDK
 
@@ -112,6 +145,9 @@ const messageId = await ao.message({
 - `getAosModule()` - Get AOS module transaction ID
 - `getAuthority()` - Get authority (MU) wallet address
 - `getBootstrapInfo()` - Get all bootstrap info at once
+- `verifySchedulerLocation(forceReload?)` - Check if scheduler location exists in arlocal
+- `verifyAosModule(forceReload?)` - Check if AOS module exists in arlocal
+- `ensureSeeded(options?)` - Automatically seed if data is missing
 
 #### Wallets & Signers
 - `loadWallet(path)` - Load any wallet from file
@@ -213,6 +249,7 @@ pnpm run test:pingpong   # Ping-pong cranking tests
 pnpm run test:config     # Configuration tests
 pnpm run test:ratelimit  # Rate limit tests (includes 30 process spawning)
 pnpm run test:proxy      # Arlocal-proxy auto-mining tests (14 tests)
+pnpm run test:client     # Docker client integration tests (15 tests, spawns 100 processes)
 
 # Watch mode
 pnpm run test:watch
@@ -227,6 +264,13 @@ pnpm run test:watch
 5. **Ping-Pong Tests** - Inter-process communication and cranking
 6. **Rate Limit Tests** - Load testing with 100 messages and **30 process spawning**
 7. **Proxy Tests** - Arlocal-proxy auto-mining verification (14 comprehensive tests)
+8. **Client Tests** - Docker client integration testing (15 tests):
+   - Service lifecycle (start/stop/restart)
+   - Data persistence
+   - Service logging and monitoring
+   - **High-load: spawns 100 processes in 1.6 seconds!**
+   - Message passing between processes
+   - Performance metrics
 
 ### Prerequisites for Tests
 

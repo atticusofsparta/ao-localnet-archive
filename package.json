@@ -38,6 +38,8 @@
     "test:ratelimit": "tsx --test tests/ratelimit.test.ts",
     "test:proxy": "tsx --test tests/proxy.test.ts",
     "test:proxy:shell": "services/arlocal-proxy/test-proxy.sh",
+    "test:client": "tsx --test tests/client.test.ts",
+    "test:restart": "tsx --test tests/restart.test.ts",
     "logs:proxy": "docker compose logs arlocal-proxy -f"
   },
   "dependencies": {

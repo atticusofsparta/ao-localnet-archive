@@ -5,11 +5,12 @@
  * including module IDs, scheduler information, and aoconnect instances.
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { connect, createDataItemSigner } from '@permaweb/aoconnect';
 import Arweave from 'arweave';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -145,6 +146,113 @@ export function getAosModule(): string {
 }
 
 /**
+ * Check if scheduler location exists in arlocal
+ * @param forceReload - Force reload the config before checking
+ * @returns true if the scheduler location transaction exists
+ */
+export async function verifySchedulerLocation(forceReload = false): Promise<boolean> {
+  try {
+    if (forceReload) {
+      clearConfigCache();
+    }
+    const config = loadConfig();
+    const schedulerLocationTxId = config.bootstrap?.transactions?.schedulerLocation;
+    
+    if (!schedulerLocationTxId) {
+      return false;
+    }
+    
+    const urls = getUrls();
+    const response = await fetch(`${urls.gateway}/tx/${schedulerLocationTxId}`);
+    
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Check if AOS module exists in arlocal
+ * @param forceReload - Force reload the config before checking
+ * @returns true if the AOS module transaction exists
+ */
+export async function verifyAosModule(forceReload = false): Promise<boolean> {
+  try {
+    if (forceReload) {
+      clearConfigCache();
+    }
+    const config = loadConfig();
+    const aosModuleTxId = config.bootstrap?.transactions?.aosModule;
+    
+    if (!aosModuleTxId) {
+      return false;
+    }
+    
+    const urls = getUrls();
+    const response = await fetch(`${urls.gateway}/tx/${aosModuleTxId}`);
+    
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Ensure the localnet is properly seeded
+ * Checks if scheduler location and AOS module exist, and seeds if missing
+ * 
+ * @param options - Options for ensuring seed
+ * @param options.force - Force re-seeding even if data exists
+ * @param options.onProgress - Callback for progress updates
+ * @returns true if seeding was performed, false if already seeded
+ */
+export async function ensureSeeded(options: {
+  force?: boolean;
+  onProgress?: (message: string) => void;
+} = {}): Promise<boolean> {
+  const { force = false, onProgress } = options;
+  
+  // Check if already seeded (unless force)
+  if (!force) {
+    const [hasSchedulerLocation, hasAosModule] = await Promise.all([
+      verifySchedulerLocation(),
+      verifyAosModule(),
+    ]);
+    
+    if (hasSchedulerLocation && hasAosModule) {
+      onProgress?.('✅ Localnet already seeded');
+      return false;
+    }
+    
+    if (!hasSchedulerLocation) {
+      onProgress?.('⚠️  Scheduler location missing - re-seeding required');
+    }
+    if (!hasAosModule) {
+      onProgress?.('⚠️  AOS module missing - re-seeding required');
+    }
+  }
+  
+  // Run seed script
+  onProgress?.('📦 Seeding localnet...');
+  
+  try {
+    const projectRoot = resolve(__dirname, '..');
+    const seedScript = resolve(projectRoot, 'seed/seed-for-aos.sh');
+    
+    execSync(`bash "${seedScript}"`, {
+      cwd: projectRoot,
+      stdio: onProgress ? 'inherit' : 'pipe',
+    });
+    
+    onProgress?.('✅ Localnet seeded successfully');
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to seed localnet: ${errorMessage}`);
+  }
+}
+
+/**
  * Get authority (MU wallet address)
  */
 export async function getAuthority(): Promise<string> {
@@ -264,6 +372,9 @@ export default {
   createBundlerSigner,
   getAoInstance,
   getBootstrapInfo,
+  verifySchedulerLocation,
+  verifyAosModule,
+  ensureSeeded,
 };
 
 /**

@@ -6,7 +6,32 @@ This document tracks all modifications made to create the ao-localnet-archive va
 
 ## Major Changes
 
-### 1. Arlocal Auto-Mining Proxy (✅ Complete)
+### 1. Auto-Seeding (✅ Complete)
+- **Added:** Automatic detection and seeding of missing bootstrap data
+  - `verifySchedulerLocation(forceReload?)` - Check if scheduler location exists
+  - `verifyAosModule(forceReload?)` - Check if AOS module exists
+  - `ensureSeeded(options?)` - Automatically seed if data is missing
+- **Changed:**
+  - `src/index.ts` - Added verification and auto-seed functions
+  - `src/client.ts` - Integrated auto-seeding into `start()` method
+  - `LocalnetStartOptions` - Added `autoSeed` option (default: true)
+- **Documentation:**
+  - `AUTO_SEED_IMPLEMENTATION.md` - Complete auto-seed architecture and usage
+  - Updated `README.md` - Added auto-seeding section
+- **Tests:**
+  - `tests/test-auto-seed.mjs` - Basic auto-seed verification
+  - `tests/test-auto-seed-full.mjs` - Full auto-seed flow test
+- **Features:**
+  - Automatic detection of missing scheduler location
+  - Automatic detection of missing AOS module
+  - Transparent re-seeding on start/restart
+  - Config cache management for accurate verification
+  - Optional manual seeding control
+  - Progress callbacks for visibility
+- **Reason:** Eliminate "scheduler location not found" errors, improve reliability
+- **Result:** Self-healing system that automatically recovers from missing bootstrap data
+
+### 2. Arlocal Auto-Mining Proxy (✅ Complete)
 - **Added:** `services/arlocal-proxy/`
   - `server.mjs` - Express proxy server with auto-mining
   - `package.json` - Dependencies (express, http-proxy-middleware)

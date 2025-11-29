@@ -90,7 +90,7 @@ services:
         target: /app/ao-wallet.json
     env_file: ./services/su/.env
     environment:
-      - SU_LOCALNET_MODE=true  # Flag for development mode
+      - SU_LOCALNET_MODE=true # Flag for development mode
     ports:
       - 4003:80
 

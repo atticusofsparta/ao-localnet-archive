@@ -9,7 +9,7 @@ import { execSync, spawn, ChildProcess } from 'child_process';
 import { existsSync, rmSync } from 'fs';
 import { resolve } from 'path';
 import { getDockerClient, getContainerStatus, isServiceHealthy, waitForServiceReady, type ServiceName } from './docker.js';
-import { loadConfig } from './index.js';
+import { loadConfig, ensureSeeded } from './index.js';
 
 /**
  * Localnet startup options
@@ -60,6 +60,12 @@ export interface LocalnetStartOptions {
    * @default true
    */
   detached?: boolean;
+  
+  /**
+   * Whether to automatically seed if scheduler location or AOS module are missing
+   * @default true
+   */
+  autoSeed?: boolean;
   
   /**
    * Callback for startup progress updates
@@ -123,6 +129,7 @@ export class LocalnetClient {
       rebuild = false,
       env = {},
       detached = true,
+      autoSeed = true,
       onProgress,
     } = options;
     
@@ -165,6 +172,18 @@ export class LocalnetClient {
       await this.waitForServices(servicesToWait, healthTimeout, onProgress);
     }
     
+    // Auto-seed if enabled and needed
+    if (autoSeed && waitForHealthy) {
+      onProgress?.('🔍 Checking if seeding is required...');
+      try {
+        await ensureSeeded({ onProgress });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        onProgress?.(`⚠️  Warning: Auto-seed failed: ${errorMessage}`);
+        // Don't throw - let the user handle seeding manually if needed
+      }
+    }
+    
     onProgress?.('✅ Localnet started successfully!');
   }
   
@@ -205,10 +224,12 @@ export class LocalnetClient {
    * Restart the localnet
    */
   async restart(options: LocalnetStartOptions = {}): Promise<void> {
-    const onProgress = options.onProgress;
+    const { persist = true, onProgress } = options;
     
+    // If not persisting, remove volumes during stop
     await this.stop({ 
       timeout: 10,
+      removeVolumes: !persist,
       onProgress: (msg) => onProgress?.(`[Stop] ${msg}`),
     });
     
@@ -297,19 +318,20 @@ export class LocalnetClient {
    * Clean data directories
    */
   private async cleanDataDirectories(): Promise<void> {
+    // These are the actual paths used in docker-compose.override.yml
+    // (bind mounts point to .ao-localnet/* directories)
     const dataPaths = [
-      this.config.data.arlocal,
-      this.config.data.cu,
-      this.config.data.mu,
-      this.config.data.su,
-      this.config.data.bundler,
+      '.ao-localnet/arlocal',
+      '.ao-localnet/cu',
+      '.ao-localnet/mu',
+      '.ao-localnet/su',
+      '.ao-localnet/bundler',
     ];
     
     for (const dataPath of dataPaths) {
-      if (!dataPath) continue;
-      
       const fullPath = resolve(this.projectRoot, dataPath);
       if (existsSync(fullPath)) {
+        console.log(`   Removing ${dataPath}...`);
         rmSync(fullPath, { recursive: true, force: true });
       }
     }
