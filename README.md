@@ -15,7 +15,8 @@ This archive includes:
 - **TypeScript SDK** - Pre-configured exports for scheduler, module IDs, and aoconnect
 - **Unified package** - All tests and dependencies at root level
 - **Bootstrap persistence** - Seed scripts save all IDs to config
-- **Auto-seeding** - Automatically detects and re-seeds missing scheduler location/module
+- **Smart Auto-seeding** - Comprehensive verification and auto-healing for seeding issues
+- **Seeding Diagnostics** - Detailed health checks and actionable error messages
 - **Auto-mining proxy** - Transactions are automatically mined without manual intervention
 - **30 process test** - Load testing with 100% success rate
 
@@ -39,6 +40,9 @@ pnpm run build        # Compile TypeScript SDK
 
 # Run tests
 pnpm test            # Run all tests
+
+# Check seeding status (optional)
+node examples/check-seeding-status.mjs full
 ```
 
 ### 🔗 Using with pnpm link (Development)
@@ -145,9 +149,14 @@ const messageId = await ao.message({
 - `getAosModule()` - Get AOS module transaction ID
 - `getAuthority()` - Get authority (MU) wallet address
 - `getBootstrapInfo()` - Get all bootstrap info at once
+
+#### Seeding Verification & Auto-Healing
+- `getSeedingStatus(verbose?)` - Get comprehensive seeding status with diagnostics
 - `verifySchedulerLocation(forceReload?)` - Check if scheduler location exists in arlocal
 - `verifyAosModule(forceReload?)` - Check if AOS module exists in arlocal
-- `ensureSeeded(options?)` - Automatically seed if data is missing
+- `ensureSeeded(options?)` - Automatically seed with verification and auto-healing
+
+See [`SEEDING_VERIFICATION.md`](SEEDING_VERIFICATION.md) for detailed documentation.
 
 #### Wallets & Signers
 - `loadWallet(path)` - Load any wallet from file
@@ -429,7 +438,7 @@ ao-localnet-archive/
 │       └── deployModule.ts   # Module deployment
 ├── services/
 │   ├── arlocal/
-│   ├── mu/                   # Pre-rate-limit MU (commit acb3852)
+│   ├── mu/                   # MU with rate limit patches (commit fa48943)
 │   ├── su/
 │   ├── cu/
 │   ├── bundler/
@@ -517,6 +526,8 @@ docker compose logs arlocal  # Check logs
 - `SDK.md` - Detailed SDK documentation
 - `CONFIG.md` - Configuration guide
 - `CONFIGURATION_SUMMARY.md` - Configuration examples
+- `SEEDING_VERIFICATION.md` - Seeding verification and auto-healing guide
+- `SEEDING_VERIFICATION_SUMMARY.md` - Implementation summary
 
 ## 🤝 Contributing
 

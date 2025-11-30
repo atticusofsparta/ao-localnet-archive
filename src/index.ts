@@ -146,6 +146,33 @@ export function getAosModule(): string {
 }
 
 /**
+ * Detailed seeding status information
+ */
+export interface SeedingStatus {
+  isSeeded: boolean;
+  schedulerLocation: {
+    exists: boolean;
+    txId: string | null;
+    accessible: boolean;
+    error?: string;
+  };
+  aosModule: {
+    exists: boolean;
+    txId: string | null;
+    accessible: boolean;
+    error?: string;
+  };
+  walletBalances: {
+    scheduler: { address: string; balance: number; sufficient: boolean };
+    aosPublisher: { address: string; balance: number; sufficient: boolean };
+    bundler: { address: string; balance: number; sufficient: boolean };
+    ao: { address: string; balance: number; sufficient: boolean };
+  } | null;
+  issues: string[];
+  lastBootstrap: string | null;
+}
+
+/**
  * Check if scheduler location exists in arlocal
  * @param forceReload - Force reload the config before checking
  * @returns true if the scheduler location transaction exists
@@ -198,22 +225,174 @@ export async function verifyAosModule(forceReload = false): Promise<boolean> {
 }
 
 /**
+ * Get comprehensive seeding status with detailed diagnostics
+ * @param verbose - Whether to include verbose output (wallet balances, etc.)
+ * @returns Detailed seeding status
+ */
+export async function getSeedingStatus(verbose = false): Promise<SeedingStatus> {
+  const config = loadConfig();
+  const urls = getUrls();
+  const issues: string[] = [];
+  
+  // Check scheduler location
+  const schedulerLocationTxId = config.bootstrap?.transactions?.schedulerLocation;
+  let schedulerLocationAccessible = false;
+  let schedulerLocationError: string | undefined;
+  
+  if (schedulerLocationTxId) {
+    try {
+      const response = await fetch(`${urls.gateway}/tx/${schedulerLocationTxId}`);
+      schedulerLocationAccessible = response.ok;
+      if (!response.ok) {
+        schedulerLocationError = `HTTP ${response.status}: ${response.statusText}`;
+        issues.push(`Scheduler location transaction not accessible (${schedulerLocationError})`);
+      }
+    } catch (error) {
+      schedulerLocationError = error instanceof Error ? error.message : String(error);
+      issues.push(`Failed to verify scheduler location: ${schedulerLocationError}`);
+    }
+  } else {
+    issues.push('Scheduler location not configured in bootstrap');
+  }
+  
+  // Check AOS module
+  const aosModuleTxId = config.bootstrap?.transactions?.aosModule;
+  let aosModuleAccessible = false;
+  let aosModuleError: string | undefined;
+  
+  if (aosModuleTxId) {
+    try {
+      const response = await fetch(`${urls.gateway}/tx/${aosModuleTxId}`);
+      aosModuleAccessible = response.ok;
+      if (!response.ok) {
+        aosModuleError = `HTTP ${response.status}: ${response.statusText}`;
+        issues.push(`AOS module transaction not accessible (${aosModuleError})`);
+      }
+    } catch (error) {
+      aosModuleError = error instanceof Error ? error.message : String(error);
+      issues.push(`Failed to verify AOS module: ${aosModuleError}`);
+    }
+  } else {
+    issues.push('AOS module not configured in bootstrap');
+  }
+  
+  // Check wallet balances if verbose
+  let walletBalances = null;
+  if (verbose) {
+    try {
+      const arweave = Arweave.init({
+        protocol: 'http',
+        host: 'localhost',
+        port: config.ports.arlocal,
+      });
+      
+      const schedulerAddr = config.bootstrap?.transactions?.scheduler || '';
+      const aosPublisherAddr = config.bootstrap?.transactions?.aosModulePublisher || '';
+      const bundlerAddr = await getBundlerAddress();
+      const aoAddr = await getAuthority();
+      
+      const getBalance = async (addr: string) => {
+        try {
+          const balance = await arweave.wallets.getBalance(addr);
+          return parseInt(balance, 10);
+        } catch {
+          return 0;
+        }
+      };
+      
+      const minBalance = 1000000000; // 0.001 AR minimum
+      
+      const [schedulerBal, aosPubBal, bundlerBal, aoBal] = await Promise.all([
+        getBalance(schedulerAddr),
+        getBalance(aosPublisherAddr),
+        getBalance(bundlerAddr),
+        getBalance(aoAddr),
+      ]);
+      
+      walletBalances = {
+        scheduler: { address: schedulerAddr, balance: schedulerBal, sufficient: schedulerBal >= minBalance },
+        aosPublisher: { address: aosPublisherAddr, balance: aosPubBal, sufficient: aosPubBal >= minBalance },
+        bundler: { address: bundlerAddr, balance: bundlerBal, sufficient: bundlerBal >= minBalance },
+        ao: { address: aoAddr, balance: aoBal, sufficient: aoBal >= minBalance },
+      };
+      
+      if (!walletBalances.scheduler.sufficient) {
+        issues.push('Scheduler wallet has insufficient balance');
+      }
+      if (!walletBalances.aosPublisher.sufficient) {
+        issues.push('AOS module publisher wallet has insufficient balance');
+      }
+      if (!walletBalances.bundler.sufficient) {
+        issues.push('Bundler wallet has insufficient balance');
+      }
+      if (!walletBalances.ao.sufficient) {
+        issues.push('AO wallet has insufficient balance');
+      }
+    } catch (error) {
+      // Wallet balance check is optional
+    }
+  }
+  
+  const isSeeded = schedulerLocationAccessible && aosModuleAccessible && issues.length === 0;
+  
+  return {
+    isSeeded,
+    schedulerLocation: {
+      exists: !!schedulerLocationTxId,
+      txId: schedulerLocationTxId || null,
+      accessible: schedulerLocationAccessible,
+      error: schedulerLocationError,
+    },
+    aosModule: {
+      exists: !!aosModuleTxId,
+      txId: aosModuleTxId || null,
+      accessible: aosModuleAccessible,
+      error: aosModuleError,
+    },
+    walletBalances,
+    issues,
+    lastBootstrap: config.bootstrap?.lastBootstrap || null,
+  };
+}
+
+/**
  * Ensure the localnet is properly seeded
  * Checks if scheduler location and AOS module exist, and seeds if missing
  * 
  * @param options - Options for ensuring seed
  * @param options.force - Force re-seeding even if data exists
  * @param options.onProgress - Callback for progress updates
+ * @param options.verify - Perform comprehensive verification before seeding
  * @returns true if seeding was performed, false if already seeded
  */
 export async function ensureSeeded(options: {
   force?: boolean;
   onProgress?: (message: string) => void;
+  verify?: boolean;
 } = {}): Promise<boolean> {
-  const { force = false, onProgress } = options;
+  const { force = false, onProgress, verify = true } = options;
   
-  // Check if already seeded (unless force)
-  if (!force) {
+  // Perform comprehensive verification if requested
+  if (!force && verify) {
+    onProgress?.('🔍 Verifying localnet seeding status...');
+    const status = await getSeedingStatus(false);
+    
+    if (status.isSeeded) {
+      onProgress?.('✅ Localnet is properly seeded');
+      return false;
+    }
+    
+    // Report issues found
+    if (status.issues.length > 0) {
+      onProgress?.(`⚠️  Seeding issues detected:`);
+      status.issues.forEach(issue => {
+        onProgress?.(`   - ${issue}`);
+      });
+    }
+    
+    onProgress?.('🔧 Re-seeding required...');
+  } else if (!force) {
+    // Simple check (backwards compatible)
     const [hasSchedulerLocation, hasAosModule] = await Promise.all([
       verifySchedulerLocation(),
       verifyAosModule(),
@@ -244,6 +423,17 @@ export async function ensureSeeded(options: {
       stdio: onProgress ? 'inherit' : 'pipe',
     });
     
+    // Verify seeding was successful
+    if (verify) {
+      onProgress?.('🔍 Verifying seed completed successfully...');
+      clearConfigCache(); // Reload config with new bootstrap data
+      const status = await getSeedingStatus(false);
+      
+      if (!status.isSeeded) {
+        throw new Error(`Seeding completed but verification failed:\n${status.issues.join('\n')}`);
+      }
+    }
+    
     onProgress?.('✅ Localnet seeded successfully');
     return true;
   } catch (error) {
@@ -260,8 +450,7 @@ export async function getAuthority(): Promise<string> {
   const arweave = Arweave.init({});
   
   const walletPath = config.wallets?.aoWallet || './wallets/ao-wallet.json';
-  const fullPath = resolve(__dirname, '..', walletPath);
-  const wallet = JSON.parse(readFileSync(fullPath, 'utf8'));
+  const wallet = loadWallet(walletPath);
   
   return await arweave.wallets.jwkToAddress(wallet);
 }
@@ -337,8 +526,7 @@ export async function getBundlerAddress(): Promise<string> {
   const arweave = Arweave.init({});
   
   const walletPath = config.wallets?.bundlerWallet || './wallets/bundler-wallet.json';
-  const fullPath = resolve(__dirname, '..', walletPath);
-  const wallet = JSON.parse(readFileSync(fullPath, 'utf8'));
+  const wallet = loadWallet(walletPath);
   
   return await arweave.wallets.jwkToAddress(wallet);
 }
@@ -403,6 +591,7 @@ export default {
   getBootstrapInfo,
   verifySchedulerLocation,
   verifyAosModule,
+  getSeedingStatus,
   ensureSeeded,
 };
 

@@ -59,26 +59,54 @@ test('E2E: Auto-Seeding', async (t) => {
     const moduleId = getAosModule();
     const scheduler = getScheduler();
     
+    // Retry spawn if it fails (service might be starting)
+    let processId;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
     console.log('   Spawning test process...');
-    const processId = await ao.spawn({
-      module: moduleId,
-      scheduler: scheduler,
-      signer: signer,
-      tags: [{ name: 'Name', value: 'E2E-AutoSeed-Test' }],
-    });
+    while (attempts < maxAttempts) {
+      try {
+        processId = await ao.spawn({
+          module: moduleId,
+          scheduler: scheduler,
+          signer: signer,
+          tags: [{ name: 'Name', value: 'E2E-AutoSeed-Test' }],
+        });
+        break;
+      } catch (error) {
+        attempts++;
+        if (attempts >= maxAttempts) throw error;
+        console.log(`   Retry ${attempts}/${maxAttempts}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     
     assert.ok(processId, 'Process should be spawned');
     assert.ok(typeof processId === 'string', 'Process ID should be a string');
     console.log('   ✅ Process created:', processId);
     
-    // Send a message to verify it works
+    // Send a message with retry
     console.log('   Sending test message...');
-    const messageId = await ao.message({
-      process: processId,
-      signer: signer,
-      tags: [{ name: 'Action', value: 'Eval' }],
-      data: 'return "E2E test successful!"',
-    });
+    attempts = 0;
+    let messageId;
+    
+    while (attempts < maxAttempts) {
+      try {
+        messageId = await ao.message({
+          process: processId,
+          signer: signer,
+          tags: [{ name: 'Action', value: 'Eval' }],
+          data: 'return "E2E test successful!"',
+        });
+        break;
+      } catch (error) {
+        attempts++;
+        if (attempts >= maxAttempts) throw error;
+        console.log(`   Retry ${attempts}/${maxAttempts}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     
     assert.ok(messageId, 'Message should be sent');
     console.log('   ✅ Message sent:', messageId);
@@ -108,8 +136,9 @@ test('E2E: Auto-Seeding', async (t) => {
     
     // Verify services are running
     const status = await client.getStatus();
-    const healthyCount = status.filter(s => s.healthy).length;
-    console.log(`   Services healthy: ${healthyCount}/${status.length}`);
+    const healthyCount = Object.values(status).filter(s => s.healthy).length;
+    const totalCount = Object.keys(status).length;
+    console.log(`   Services healthy: ${healthyCount}/${totalCount}`);
     
     assert.ok(healthyCount >= 5, 'Most services should be healthy');
   });

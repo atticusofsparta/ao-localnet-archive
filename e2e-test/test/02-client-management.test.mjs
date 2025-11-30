@@ -27,23 +27,24 @@ test('E2E: LocalnetClient Management', async (t) => {
     const status = await client.getStatus();
     
     assert.ok(status, 'Status should be returned');
-    assert.ok(Array.isArray(status), 'Status should be an array');
+    assert.strictEqual(typeof status, 'object', 'Status should be an object');
     
     // Check for key services
-    const serviceNames = status.map(s => s.service);
-    assert.ok(serviceNames.includes('arlocal'), 'Should include arlocal');
-    assert.ok(serviceNames.includes('mu'), 'Should include mu');
-    assert.ok(serviceNames.includes('su'), 'Should include su');
-    assert.ok(serviceNames.includes('cu'), 'Should include cu');
+    assert.ok(status.arlocal, 'Should include arlocal');
+    assert.ok(status.mu, 'Should include mu');
+    assert.ok(status.su, 'Should include su');
+    assert.ok(status.cu, 'Should include cu');
     
+    const serviceNames = Object.keys(status);
     console.log('   Services:', serviceNames.join(', '));
   });
 
   await t.test('can check if services are healthy', async () => {
     const status = await client.getStatus();
-    const healthyServices = status.filter(s => s.healthy);
+    const healthyServices = Object.values(status).filter(s => s.healthy);
+    const totalServices = Object.keys(status).length;
     
-    console.log(`   Healthy: ${healthyServices.length}/${status.length}`);
+    console.log(`   Healthy: ${healthyServices.length}/${totalServices}`);
     
     // Most services should be healthy (allowing some to be stopped)
     assert.ok(healthyServices.length > 0, 'At least some services should be healthy');
@@ -74,9 +75,10 @@ test('E2E: LocalnetClient Management', async (t) => {
     
     // Verify services are running after restart
     const status = await client.getStatus();
-    const healthyServices = status.filter(s => s.healthy);
+    const healthyServices = Object.values(status).filter(s => s.healthy);
+    const totalServices = Object.keys(status).length;
     
-    console.log(`   After restart: ${healthyServices.length}/${status.length} healthy`);
+    console.log(`   After restart: ${healthyServices.length}/${totalServices} healthy`);
     assert.ok(healthyServices.length >= 5, 'Most services should be healthy after restart');
   });
 });

@@ -8,7 +8,7 @@
 import { execSync, spawn, ChildProcess } from 'child_process';
 import { existsSync, rmSync } from 'fs';
 import { resolve } from 'path';
-import { getDockerClient, getContainerStatus, isServiceHealthy, waitForServiceReady, type ServiceName } from './docker.js';
+import { getDockerClient, getContainerStatus, isServiceHealthy, waitForServiceReady, getContainerLogs, type ServiceName } from './docker.js';
 import { loadConfig, ensureSeeded } from './index.js';
 
 /**
@@ -176,10 +176,18 @@ export class LocalnetClient {
     if (autoSeed && waitForHealthy) {
       onProgress?.('🔍 Checking if seeding is required...');
       try {
-        await ensureSeeded({ onProgress });
+        const wasSeeded = await ensureSeeded({ 
+          verify: true, // Use comprehensive verification
+          onProgress,
+        });
+        
+        if (wasSeeded) {
+          onProgress?.('✅ Localnet seeded and verified');
+        }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         onProgress?.(`⚠️  Warning: Auto-seed failed: ${errorMessage}`);
+        onProgress?.(`💡 Tip: You can manually seed with: pnpm run seed`);
         // Don't throw - let the user handle seeding manually if needed
       }
     }
@@ -312,6 +320,14 @@ export class LocalnetClient {
     );
     
     return healthChecks.every(healthy => healthy);
+  }
+  
+  /**
+   * Get logs from a service container
+   */
+  async getLogs(service: ServiceName, options: { tail?: number } = {}): Promise<string> {
+    const { tail = 100 } = options;
+    return getContainerLogs(service, tail);
   }
   
   /**

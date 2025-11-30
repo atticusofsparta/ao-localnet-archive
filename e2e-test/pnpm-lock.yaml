@@ -1134,7 +1134,7 @@ snapshots:
       buffer: 6.0.3
       debug: 4.4.3
       http-message-signatures: 1.0.4
-      hyper-async: 1.1.2
+      hyper-async: 1.2.0
       mnemonist: 0.39.8
       ramda: 0.30.1
       structured-headers: 2.0.2

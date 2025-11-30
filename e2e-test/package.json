@@ -10,6 +10,7 @@
     "test:client": "node test/02-client-management.test.mjs",
     "test:auto-seed": "node test/03-auto-seed.test.mjs",
     "test:rate-limit": "node test/04-rate-limit.test.mjs",
+    "test:wallet": "node test/05-wallet-loading.test.mjs",
     "clean": "rm -rf node_modules pnpm-lock.yaml"
   },
   "dependencies": {

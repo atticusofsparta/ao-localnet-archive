@@ -10,7 +10,8 @@ These tests verify that:
 3. The `LocalnetClient` can manage Docker services
 4. Auto-seeding functionality works in consumer projects
 5. Rate limits are properly disabled
-6. The package works seamlessly when used as a dependency
+6. Wallets are loaded from the project directory (not the installation directory)
+7. The package works seamlessly when used as a dependency
 
 ## Directory Structure
 
@@ -20,10 +21,11 @@ e2e-test/
 ├── setup.sh               # Installation script
 ├── README.md             # This file
 └── test/
-    ├── 01-basic-usage.test.mjs      # Test SDK imports and basic usage
+    ├── 01-basic-usage.test.mjs       # Test SDK imports and basic usage
     ├── 02-client-management.test.mjs # Test LocalnetClient
-    ├── 03-auto-seed.test.mjs        # Test auto-seeding
-    └── 04-rate-limit.test.mjs       # Test rate limit fix
+    ├── 03-auto-seed.test.mjs         # Test auto-seeding
+    ├── 04-rate-limit.test.mjs        # Test rate limit fix
+    └── 05-wallet-loading.test.mjs    # Test wallet path resolution
 ```
 
 ## Setup
@@ -59,6 +61,7 @@ pnpm test:basic        # Test 1: Basic SDK usage
 pnpm test:client       # Test 2: LocalnetClient management
 pnpm test:auto-seed    # Test 3: Auto-seeding
 pnpm test:rate-limit   # Test 4: Rate limit verification
+pnpm test:wallet       # Test 5: Wallet loading from project directory
 ```
 
 ## What Each Test Does
@@ -97,6 +100,18 @@ pnpm test:rate-limit   # Test 4: Rate limit verification
 ✅ Can run high-frequency message loop  
 ✅ Zero rate limit errors in all scenarios  
 ✅ Achieves high throughput (25+ msg/sec)
+
+### Test 5: Wallet Loading (`05-wallet-loading.test.mjs`)
+
+✅ Loads AO wallet from project directory  
+✅ Loads bundler wallet from project directory  
+✅ `getAuthority()` uses project wallet  
+✅ `getBundlerAddress()` uses project wallet  
+✅ Wallet addresses match config bootstrap data  
+✅ `loadWallet()` prioritizes project directory over installation directory  
+✅ Helpful error messages for missing wallets  
+✅ `createAoSigner()` works with project wallet  
+✅ `createBundlerSigner()` works with project wallet
 
 ## Expected Output
 
