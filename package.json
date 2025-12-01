@@ -54,6 +54,7 @@
     "test:client": "tsx --test tests/client.test.ts",
     "test:restart": "tsx --test tests/restart.test.ts",
     "test:seeding": "tsx --test tests/seeding-verification.test.ts",
+    "test:mu-config": "tsx --test tests/mu-config.test.ts",
     "test:rate-limit-fix": "node tests/test-rate-limit-fix.mjs",
     "test:e2e": "cd e2e-test && pnpm run setup && pnpm test",
     "test:e2e:setup": "cd e2e-test && pnpm run setup",

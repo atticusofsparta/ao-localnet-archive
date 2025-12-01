@@ -47,12 +47,9 @@ export function generateDockerComposeOverride(config) {
   };
 
   // Add port mappings
+  // Note: arlocal is accessed via arlocal-proxy, so we don't expose it directly
   if (config.ports) {
-    if (config.services.arlocal?.enabled !== false) {
-      override.services.arlocal = {
-        ports: [`${config.ports.arlocal}:80`]
-      };
-    }
+    // arlocal is internal-only, accessed via arlocal-proxy
     
     if (config.services.mu?.enabled !== false) {
       override.services.mu = {
@@ -219,15 +216,8 @@ export function generateDockerComposeOverride(config) {
     };
   }
 
-  // MU rate limit configuration (disabled - using pre-rate-limit MU version)
-  // if (config.services.mu?.rateLimit) {
-  //   override.services.mu = override.services.mu || {};
-  //   override.services.mu.environment = override.services.mu.environment || [];
-  //   override.services.mu.environment.push(
-  //     `IP_WALLET_RATE_LIMIT=${config.services.mu.rateLimit.maxRequests}`,
-  //     `IP_WALLET_RATE_LIMIT_INTERVAL=${config.services.mu.rateLimit.intervalMs}`
-  //   );
-  // }
+  // Note: MU rate limiting is configured via the generated .env file in generateMuEnv()
+  // This ensures user config is respected and changes are picked up on restart
 
   // CU supported module formats
   if (config.services.cu?.supportedModuleFormats) {
@@ -257,6 +247,57 @@ export function generateDockerComposeOverride(config) {
   }
 
   return override;
+}
+
+/**
+ * Generate MU .env file with user configuration
+ * Respects user's rate limit config or defaults to unlimited for local testing
+ */
+export async function generateMuEnv(config) {
+  const packageDir = process.env.AO_LOCALNET_PACKAGE_DIR || __dirname;
+  const aoWalletPath = resolve(packageDir, config.wallets?.aoWallet || './wallets/ao-wallet.json');
+  
+  // Get AO wallet address
+  let aoWalletAddress = '';
+  try {
+    const Arweave = (await import('arweave')).default;
+    const arweave = Arweave.init({});
+    const wallet = JSON.parse(readFileSync(aoWalletPath, 'utf8'));
+    aoWalletAddress = await arweave.wallets.jwkToAddress(wallet);
+  } catch (error) {
+    console.warn('Warning: Could not load AO wallet address, using default');
+    aoWalletAddress = 'DEFAULT_WALLET';
+  }
+  
+  // Use user's rate limit config or default to unlimited for local testing
+  const rateLimit = config.services?.mu?.rateLimit?.maxRequests || 999999;
+  const rateLimitInterval = config.services?.mu?.rateLimit?.intervalMs || 1000;
+  
+  const envContent = `NODE_CONFIG_ENV=development
+DEBUG=*
+PORT=80
+
+PATH_TO_WALLET=/usr/app/ao-wallet.json
+
+CU_URL=http://cu
+GATEWAY_URL=http://arlocal
+ARWEAVE_URL=http://arlocal
+GRAPHQL_URL=http://arlocal/graphql
+UPLOADER_URL=http://bundler
+
+TASK_QUEUE_MAX_RETRIES=0
+
+# Rate limiting configuration
+# User configured: ${rateLimit} requests per ${rateLimitInterval}ms
+IP_WALLET_RATE_LIMIT=${rateLimit}
+IP_WALLET_RATE_LIMIT_INTERVAL=${rateLimitInterval}
+`;
+  
+  const muEnvPath = resolve(packageDir, 'services/mu/.env');
+  writeFileSync(muEnvPath, envContent, 'utf8');
+  console.log(`✅ Generated MU .env (rate limit: ${rateLimit} req/${rateLimitInterval}ms)`);
+  
+  return { aoWalletAddress, rateLimit, rateLimitInterval };
 }
 
 /**
@@ -351,9 +392,13 @@ export function initConfig() {
 /**
  * Apply configuration
  */
-export function applyConfig() {
+export async function applyConfig() {
   try {
     const config = loadConfig();
+    
+    // Generate MU .env with correct wallet address
+    await generateMuEnv(config);
+    
     const override = generateDockerComposeOverride(config);
     saveDockerComposeOverride(override);
     console.log('\n✅ Configuration applied successfully!');
